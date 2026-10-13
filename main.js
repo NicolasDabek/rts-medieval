@@ -256,9 +256,25 @@ function cmdGather(u, r) { u.cmd = { type: 'gather', res: r }; u.state = 'toRes'
 function cmdBuild(u, b) { u.cmd = { type: 'build', b }; u.target = null; moveTo(u, b.pos); }
 function cmdAttack(u, e) { u.cmd = { type: 'attack', target: e }; u.target = e; u.path = []; u.repathT = 0; }
 function cmdMove(u, p, type = 'move') { u.cmd = { type, dest: p.clone() }; u.target = null; moveTo(u, p); }
+function freeSlot(p, used) {
+  const [cx, cz] = toCell(p);
+  for (let r = 0; r < 10; r++) for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
+    if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue; const x = cx + dx, z = cz + dz;
+    if (x < 1 || z < 1 || x >= N - 1 || z >= N - 1) continue; const i = x + z * N;
+    if (grid[i] || used.has(i) || used.has(i + 1) || used.has(i - 1) || used.has(i + N) || used.has(i - N)) continue; used.add(i); return cellPos(i);
+  }
+  return p.clone();
+}
 function formation(sel, p, type) {
-  const cols = Math.ceil(Math.sqrt(sel.length));
-  sel.forEach((u, i) => cmdMove(u, new THREE.Vector3(p.x + (i % cols - (cols - 1) / 2) * 1.4, 0, p.z + (Math.floor(i / cols) - (cols - 1) / 2) * 1.4), type));
+  const cols = Math.ceil(Math.sqrt(sel.length)), used = new Set();
+  const c = sel.reduce((a, u) => a.add(u.pos), new THREE.Vector3()).divideScalar(sel.length);
+  const dir = new THREE.Vector3(p.x - c.x, 0, p.z - c.z); if (dir.lengthSq() < 1e-6) dir.set(0, 0, -1); dir.normalize();
+  const side = new THREE.Vector3(-dir.z, 0, dir.x);
+  const order = [...sel].sort((a, b) => side.dot(a.pos) - side.dot(b.pos)); // évite les croisements
+  order.forEach((u, i) => {
+    const col = i % cols - (cols - 1) / 2, row = Math.floor(i / cols);
+    cmdMove(u, freeSlot(p.clone().addScaledVector(side, col * 1.7).addScaledVector(dir, -row * 1.7), used), type);
+  });
 }
 
 // ================= Combat =================
@@ -309,9 +325,31 @@ function updateUnit(u, dt) {
   let moving = false;
   if (u.path.length) {
     const p = u.path[0], dx = p.x - u.pos.x, dz = p.z - u.pos.z, len = Math.hypot(dx, dz);
-    if (len < 0.3) u.path.shift(); else { const s = Math.min(len, S.speed * dt) / len; u.pos.x += dx * s; u.pos.z += dz * s; u.mesh.rotation.y = Math.atan2(dx, dz); moving = true; }
+    const last = u.path.length === 1;
+    if (len < 0.3 || (last && len < 1.6 && units.some(o => o !== u && !o.path.length && d2(o.pos, p) < 0.8))) u.path.shift();
+    else {
+      let nx = dx / len, nz = dz / len, ax = 0, az = 0;
+      for (const o of units) { // évitement local : contourne les unités devant
+        if (o === u) continue; const ox = o.pos.x - u.pos.x, oz = o.pos.z - u.pos.z, dd = ox * ox + oz * oz; if (dd > 2.6 || dd < 1e-6) continue;
+        const dl = Math.sqrt(dd), ahead = (ox * nx + oz * nz) / dl; if (ahead < 0.3) continue;
+        const sg = (ox * -nz + oz * nx) > 0 ? -1 : 1, w = (1.6 - dl) / 1.6 * (o.path.length ? 0.5 : 1.2);
+        ax += -nz * sg * w; az += nx * sg * w;
+      }
+      nx += ax; nz += az; const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;
+      const st = Math.min(len, S.speed * dt); u.pos.x += nx * st; u.pos.z += nz * st; u.mesh.rotation.y = Math.atan2(nx, nz); moving = true;
+    }
   }
-  for (const o of units) if (o !== u) { const dx = u.pos.x - o.pos.x, dz = u.pos.z - o.pos.z, d = dx * dx + dz * dz; if (d < 0.81 && d > 1e-8) { const dd = Math.sqrt(d), p = (0.9 - dd) * 0.5; u.pos.x += dx / dd * p; u.pos.z += dz / dd * p; } }
+  u.chkT = (u.chkT || 0) + dt; // détection de blocage : repath, puis détour, puis abandon
+  if (u.chkT > 1) {
+    if (u.path.length && u.lastChk && d2(u.pos, u.lastChk) < S.speed * 0.15) {
+      u.stuck = (u.stuck || 0) + 1; u.unstuck = (u.unstuck || 0) + 1; const dest = u.path[u.path.length - 1];
+      if (u.stuck >= 5) { u.path = []; u.stuck = 0; }
+      else { u.path = findPath(u.pos, dest); if (u.stuck >= 2) { const a = rand(0, 6.28); u.path.unshift(freeSlot(new THREE.Vector3(u.pos.x + Math.cos(a) * 2, 0, u.pos.z + Math.sin(a) * 2), new Set())); } }
+    } else u.stuck = 0;
+    u.lastChk = u.pos.clone(); u.chkT = 0;
+  }
+  const yl = u.path.length ? 0.25 : 0.6;
+  for (const o of units) if (o !== u) { const dx = u.pos.x - o.pos.x, dz = u.pos.z - o.pos.z, d = dx * dx + dz * dz; if (d < 0.81 && d > 1e-8) { const dd = Math.sqrt(d), p = (0.9 - dd) * yl; u.pos.x += dx / dd * p; u.pos.z += dz / dd * p; } }
   for (const o of buildings) pushOut(u, o); for (const o of resources) if (Math.abs(o.pos.x - u.pos.x) < 3 && Math.abs(o.pos.z - u.pos.z) < 3) pushOut(u, o);
   u.pos.x = Math.max(-HALF + 0.5, Math.min(HALF - 0.5, u.pos.x)); u.pos.z = Math.max(-HALF + 0.5, Math.min(HALF - 0.5, u.pos.z));
   u.body.position.y = moving ? Math.abs(Math.sin(performance.now() / 90)) * 0.12 : 0;
@@ -682,4 +720,4 @@ function loop() {
 updateFog(); updateHUD(); loop();
 if (!started) $('start').style.display = 'flex';
 $('start').addEventListener('click', e => { const k = e.target.closest('button')?.dataset.diff; if (!k) return; D = DIFFS[k]; ai.nextWave = D.first; started = true; $('start').style.display = 'none'; msg('Difficulté : ' + D.label); });
-window.__game = { get D() { return D; }, doAct, setRally, pickEntity, get selBuilding() { return selBuilding; }, set selBuilding(b) { selBuilding = b; }, units, buildings, resources, teams, ai, THREE, cmdMove, cmdGather, cmdAttack, screenOf, camTarget, get camDist() { return camDist; }, get over() { return gameOver; }, endGame };
+window.__game = { step, addUnit, get D() { return D; }, doAct, setRally, pickEntity, get selBuilding() { return selBuilding; }, set selBuilding(b) { selBuilding = b; }, units, buildings, resources, teams, ai, THREE, cmdMove, cmdGather, cmdAttack, screenOf, camTarget, get camDist() { return camDist; }, get over() { return gameOver; }, endGame };

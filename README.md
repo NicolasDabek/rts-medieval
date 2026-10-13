@@ -8,4 +8,6 @@ Objectif : détruire l'hôtel de ville ennemi (IA rouge, coin opposé de la cart
 
 **Mobile** : toucher une unité = sélection (double-toucher = même type) · toucher sol/ressource/ennemi/chantier = ordre · 1 doigt = déplacer la caméra · 2 doigts = pincer pour zoomer · boutons à gauche : ▭ mode cadre, ⚔ attaque-déplacement, 🛡 toute l'armée, 🏰 base, ✖ désélectionner · toucher la minimap = caméra.
 
-Debug : `?speed=10` (accéléré), `?nofog` (sans brouillard).
+Nouveautés : écran de difficulté (Facile/Normal/Difficile), ⏹ Arrêter (X), annulation remboursée des files et chantiers, 🚩 point de ralliement (clic droit avec un bâtiment sélectionné, ou bouton ; sur une ressource = récolte auto), appui long mobile = sélection.
+
+Debug : `?diff=normal` (sans écran de départ), `?speed=10` (accéléré), `?nofog` (sans brouillard).
