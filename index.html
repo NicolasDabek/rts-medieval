@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><title>RTS Médiéval</title>
+<style>
+body{margin:0;overflow:hidden;font-family:sans-serif;user-select:none}
+#hud{position:fixed;top:0;left:0;right:0;background:rgba(40,25,10,.85);color:#f3e2b3;padding:8px 14px;display:flex;gap:24px;font-size:16px}
+#panel{position:fixed;bottom:0;left:0;background:rgba(40,25,10,.85);color:#f3e2b3;padding:10px;min-width:260px;min-height:60px}
+#panel button{margin:4px;padding:6px 10px;background:#6b4a22;color:#fff;border:1px solid #c9a35a;cursor:pointer}
+#panel button:disabled{opacity:.4}
+#box{position:fixed;border:1px solid #fff;background:rgba(255,255,255,.15);display:none;pointer-events:none}
+#msg{position:fixed;top:44px;width:100%;text-align:center;color:#fff;text-shadow:0 0 4px #000}
+#help{position:fixed;bottom:0;right:0;background:rgba(0,0,0,.5);color:#ddd;font-size:12px;padding:8px}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head><body>
+<div id="hud"><span>🪵 Bois : <b id="wood">0</b></span><span>🪨 Pierre : <b id="stone">0</b></span><span>💰 Or : <b id="gold">0</b></span><span>👥 Population : <b id="pop">0</b></span></div>
+<div id="panel"></div><div id="box"></div><div id="msg"></div>
+<div id="help">Clic gauche / glisser : sélection · Clic droit : déplacer / récolter<br>WASD ou flèches / bords : caméra · Molette : zoom · Échap : annuler</div>
+<script type="module" src="./main.js"></script>
+</body></html>
