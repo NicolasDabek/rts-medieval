@@ -20,7 +20,8 @@ button:disabled{opacity:.4}
 #help{position:fixed;bottom:0;right:0;background:rgba(0,0,0,.55);color:#ddd;font-size:12px;padding:6px 8px;z-index:5}
 #mini{position:fixed;right:8px;bottom:58px;width:170px;height:170px;border:2px solid #c9a35a;z-index:5;touch-action:none;image-rendering:pixelated}
 #end{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:10}
-#end h1{font-size:48px;margin:0 0 20px}
+#start{position:fixed;inset:0;background:rgba(20,12,4,.92);display:none;flex-direction:column;align-items:center;justify-content:center;color:#f3e2b3;z-index:11;text-align:center;padding:20px}
+#start .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}#start button{font-size:22px;padding:14px 26px;min-width:140px}#start .small{font-size:13px;opacity:.8;max-width:520px}#start h1,#end h1{font-size:48px;margin:0 0 20px}
 #end button{font-size:22px;padding:12px 30px}
 @media (pointer:coarse),(max-width:760px){
  #hud{font-size:13px;gap:2px 12px}
@@ -43,6 +44,9 @@ button:disabled{opacity:.4}
 <div id="panel" class="ui"></div><div id="box"></div><div id="msg"></div>
 <canvas id="mini" width="160" height="160"></canvas>
 <div id="help">Clic gauche / glisser : sélection (Maj = ajouter) · Clic droit : déplacer / récolter / attaquer / construire<br>F + clic : attaque-déplacement · WASD/ZQSD/flèches/bords : caméra · Molette : zoom · H : base · Échap : annuler</div>
+<div id="start"><h1>⚔ RTS Médiéval</h1><p>Détruisez l'hôtel de ville ennemi (rouge). Choisissez la difficulté :</p>
+<div class="row"><button data-diff="facile">Facile</button><button data-diff="normal">Normal</button><button data-diff="difficile">Difficile</button></div>
+<p class="small">Facile : vagues petites et tardives (~8 min) · Normal : 1re vague vers 5:30 · Difficile : IA plus rapide avec bonus de ressources</p></div>
 <div id="end"><h1 id="endTitle"></h1><p id="endSub"></p><button onclick="location.reload()">Rejouer</button></div>
 <script type="module" src="./main.js"></script>
 </body></html>

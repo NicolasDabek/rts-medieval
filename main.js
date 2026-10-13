@@ -17,6 +17,12 @@ const BUILD = {
   caserne: { hp: 700, radius: 3.3, cost: { bois: 120, pierre: 80 }, time: 25, label: 'Caserne', bar: 5.5 },
 };
 const RES_LABEL = { bois: 'Bois', pierre: 'Pierre', or: 'Or' };
+const DIFFS = {
+  facile: { label: 'Facile', bonus: [0, 0, 0], first: 480, base: 2, grow: 1, interval: 210, vills: 8, barracks: 1, gather: 0.8 },
+  normal: { label: 'Normal', bonus: [0, 0, 0], first: 330, base: 3, grow: 2, interval: 170, vills: 12, barracks: 1, gather: 1 },
+  difficile: { label: 'Difficile', bonus: [0.35, 0.35, 0.15], first: 250, base: 4, grow: 3, interval: 130, vills: 16, barracks: 2, gather: 1 },
+};
+let D = DIFFS[params.get('diff')] || null, started = !!D;
 const TEAM_COLOR = [0x3060c0, 0xc03030];
 const teams = [{ res: { bois: 150, pierre: 60, or: 80 } }, { res: { bois: 150, pierre: 60, or: 80 } }];
 const costTxt = c => Object.entries(c).map(([k, v]) => `${v} ${RES_LABEL[k].toLowerCase()}`).join(' + ');
@@ -200,6 +206,15 @@ fogPlane.rotation.x = -Math.PI / 2; fogPlane.position.y = 0.12; fogPlane.renderO
 const fogIdx = p => { const i = Math.max(0, Math.min(FN - 1, Math.floor((p.x + HALF) / FC))), j = Math.max(0, Math.min(FN - 1, Math.floor((p.z + HALF) / FC))); return i + j * FN; };
 const isVis = p => NOFOG || visible[fogIdx(p)];
 const isExp = p => NOFOG || explored[fogIdx(p)];
+const dimCache = new Map();
+function setDim(e, dim) {
+  if (NOFOG) dim = false; if (!!e.dimmed === dim) return; e.dimmed = dim;
+  e.mesh.traverse(o => {
+    if (!o.isMesh) return;
+    if (dim) { o.userData.m0 = o.material; let m = dimCache.get(o.material); if (!m) { m = o.material.clone(); m.color.multiplyScalar(0.4); dimCache.set(o.material, m); } o.material = m; }
+    else if (o.userData.m0) o.material = o.userData.m0;
+  });
+}
 function updateFog() {
   visible.fill(0);
   const reveal = (p, r) => {
@@ -215,8 +230,8 @@ function updateFog() {
   }
   fogTex.needsUpdate = true;
   for (const u of units) if (u.team === 1) u.mesh.visible = isVis(u.pos);
-  for (const b of buildings) if (b.team === 1) { if (isVis(b.pos)) b.seen = true; b.mesh.visible = !!b.seen || NOFOG; }
-  for (const r of resources) r.mesh.visible = isExp(r.pos);
+  for (const b of buildings) if (b.team === 1) { const v = isVis(b.pos); if (v) b.seen = true; b.mesh.visible = !!b.seen || NOFOG; setDim(b, !v); }
+  for (const r of resources) { r.mesh.visible = isExp(r.pos); setDim(r, !isVis(r.pos)); }
 }
 
 // ================= Économie =================
@@ -267,7 +282,7 @@ function damage(t, dmg, src) {
 function kill(e) {
   if (e.dead) return; e.dead = true; scene.remove(e.mesh); if (e.bar) scene.remove(e.bar);
   const arr = e.kind === 'unit' ? units : e.kind === 'building' ? buildings : resources; arr.splice(arr.indexOf(e), 1);
-  if (e.kind !== 'unit') rebuildGrid();
+  if (e.flag) scene.remove(e.flag); if (e.kind !== 'unit') rebuildGrid();
   if (e === selBuilding) selBuilding = null;
   if (e.kind === 'building' && e.type === 'hdv') endGame(e.team === 1);
 }
@@ -313,7 +328,7 @@ function updateUnit(u, dt) {
       if (r.dead) { u.state = 'toRes'; return; }
       u.mesh.rotation.y = Math.atan2(r.pos.x - u.pos.x, r.pos.z - u.pos.z);
       u.timer += dt; u.body.rotation.x = Math.sin(u.timer * 12) * 0.2;
-      if (u.timer > 0.5) {
+      if (u.timer > (u.team === 1 ? 0.5 / D.gather : 0.5)) {
         u.timer = 0; if (u.carryType !== r.type) { u.carry = 0; u.carryType = r.type; } u.carry++; r.amount--;
         if (r.amount <= 0) kill(r);
         if (u.carry >= CAP || r.dead) { u.state = 'toDrop'; moveTo(u, home.pos); }
@@ -343,7 +358,10 @@ function updateBuilding(b, dt) {
     if (b.trainT <= 0) {
       const type = b.queue.shift(); const dir = new THREE.Vector3(-b.pos.x, 0, -b.pos.z).normalize();
       const u = addUnit(type, b.team, b.pos.x + dir.x * (b.radius + 1.5) + rand(-1, 1), b.pos.z + dir.z * (b.radius + 1.5) + rand(-1, 1));
-      if (b.rally) cmdMove(u, b.rally, UNIT[type].aggro ? 'attackMove' : 'move');
+      if (b.rally) {
+        const rr = b.rally.res && (b.rally.res.dead ? nearestRes(b.rally.res.type, b.rally.pos, 20) : b.rally.res);
+        if (type === 'villageois' && rr) cmdGather(u, rr); else cmdMove(u, b.rally.pos, UNIT[type].aggro ? 'attackMove' : 'move');
+      }
       if (b.queue.length) b.trainT = UNIT[b.queue[0]].time;
     }
   }
@@ -353,7 +371,7 @@ function updateBuilding(b, dt) {
 }
 
 // ================= IA =================
-const ai = { t: 0, think: 0, nextWave: 240, waveN: 0 };
+const ai = { t: 0, think: 0, nextWave: D ? D.first : 300, waveN: 0 };
 function aiSpot(r) {
   const h = hdvOf(1); for (let k = 0; k < 40; k++) { const a = rand(0, Math.PI * 2), d = rand(9, 22), x = h.pos.x + Math.cos(a) * d, z = h.pos.z + Math.sin(a) * d; if (free(x, z, r + 1.5)) return [x, z]; }
   return null;
@@ -367,7 +385,7 @@ function aiDefend(src) {
 }
 function aiUpdate(dt) {
   ai.t += dt; ai.think -= dt; if (ai.think > 0) return; ai.think = 1;
-  const R = teams[1].res; R.or += 0.5; R.bois += 0.5; R.pierre += 0.2; // petit bonus d'IA
+  const R = teams[1].res; R.bois += D.bonus[0]; R.or += D.bonus[1]; R.pierre += D.bonus[2]; // bonus selon difficulté
   const h = hdvOf(1); if (!h) return;
   const my = units.filter(u => u.team === 1), vills = my.filter(u => u.type === 'villageois'), sold = my.filter(u => u.type !== 'villageois');
   const mine = buildings.filter(b => b.team === 1);
@@ -379,18 +397,18 @@ function aiUpdate(dt) {
     const r = nearestRes(type, h.pos, 45) || nearestRes(null, h.pos); if (r) cmdGather(v, r);
   }
   const cap = popCap(1), pop = popCount(1);
-  if (vills.length < 12 && !h.queue.length && pop < cap) train(h, 'villageois');
+  if (vills.length < D.vills && !h.queue.length && pop < cap) train(h, 'villageois');
   if (pop >= cap - 2 && cap < 60 && !mine.some(b => b.type === 'maison' && !b.done)) aiBuild('maison', vills);
   const cas = mine.filter(b => b.type === 'caserne');
-  if (vills.length >= 5 && cas.length < (ai.t > 600 ? 2 : 1)) aiBuild('caserne', vills);
+  if (vills.length >= 5 && cas.length < (ai.t > 600 ? D.barracks + 1 : D.barracks)) aiBuild('caserne', vills);
   for (const c of cas) if (c.done && c.queue.length < 2) train(c, Math.random() < 0.55 ? 'epeiste' : 'archer');
   const threat = units.find(u => u.team === 0 && d2(u.pos, h.pos) < 25); if (threat) aiDefend(threat);
   if (ai.t > ai.nextWave) {
-    const idle = sold.filter(s => !s.target), n = Math.min(idle.length, 3 + ai.waveN * 2);
+    const idle = sold.filter(s => !s.target), n = Math.min(idle.length, D.base + ai.waveN * D.grow);
     const tgt = hdvOf(0) || buildings.find(b => b.team === 0);
-    if (n >= 3 && tgt) {
+    if (n >= Math.min(3, D.base) && tgt) {
       idle.slice(0, n).forEach(s => cmdMove(s, tgt.pos, 'attackMove'));
-      ai.waveN++; ai.nextWave = ai.t + Math.max(70, 150 - ai.waveN * 15); msg(`⚔ Vague ennemie n°${ai.waveN} en approche (${n} soldats) !`, 5000);
+      ai.waveN++; ai.nextWave = ai.t + Math.max(D.interval * 0.6, D.interval - ai.waveN * 10); msg(`⚔ Vague ennemie n°${ai.waveN} en approche (${n} soldats) !`, 5000);
     } else ai.nextWave = ai.t + 20;
   }
 }
@@ -398,7 +416,7 @@ function aiUpdate(dt) {
 // ================= Interface =================
 const $ = id => document.getElementById(id);
 let msgT; function msg(t, ms = 2500) { $('msg').textContent = t; clearTimeout(msgT); msgT = setTimeout(() => $('msg').textContent = '', ms); }
-let selBuilding = null, placing = null, atkMode = false, boxMode = false, gameOver = false, gameTime = 0;
+let rallyMode = false, selBuilding = null, placing = null, atkMode = false, boxMode = false, gameOver = false, gameTime = 0;
 const selUnits = () => units.filter(u => u.selected);
 function setSel(list, add = false) { if (!add) units.forEach(u => u.selected = false); list.forEach(u => u.selected = true); selBuilding = null; }
 function updateHUD() {
@@ -413,13 +431,14 @@ function renderPanel() {
   if (selBuilding && selBuilding.team === 0) {
     const b = selBuilding, S = BUILD[b.type];
     h = `<b>${S.label}</b> — PV ${Math.ceil(b.hp)}/${b.maxHp}<br>`;
-    if (!b.done) h += `En construction : ${Math.floor(b.progress * 100)} % (clic droit / touchez avec des villageois pour aider)`;
+    if (!b.done) h += `En construction : ${Math.floor(b.progress * 100)} % (envoyez des villageois pour aider)<br>` + btn('cancelb', '✖ Annuler (remboursé)', true);
     else {
       const full = popCount(0) >= popCap(0);
       if (b.type === 'hdv') h += btn('train:villageois', `Villageois (${costTxt(UNIT.villageois.cost)})`, canPay(0, UNIT.villageois.cost) && !full);
       if (b.type === 'caserne') h += btn('train:epeiste', `Épéiste (${costTxt(UNIT.epeiste.cost)})`, canPay(0, UNIT.epeiste.cost) && !full) + btn('train:archer', `Archer (${costTxt(UNIT.archer.cost)})`, canPay(0, UNIT.archer.cost) && !full);
       if (b.type === 'maison') h += '+5 population';
-      if (b.queue.length) h += `<br>File : ${b.queue.map(t => UNIT[t].label).join(', ')} (${Math.ceil(b.trainT)} s)`;
+      if (b.type !== 'maison') h += btn('rally', rallyMode ? '🚩 Choisissez la destination…' : '🚩 Point de ralliement', true);
+      if (b.queue.length) h += `<br>File (${Math.ceil(b.trainT)} s) : ` + b.queue.map((t, i) => btn('cancelq:' + i, '✖ ' + UNIT[t].label, true)).join('');
       if (full && b.type !== 'maison') h += '<br><i>Population max : construisez des maisons</i>';
     }
   } else if (selBuilding) h = `<b>${BUILD[selBuilding.type].label} ennemi(e)</b> — PV ${Math.ceil(selBuilding.hp)}/${selBuilding.maxHp}`;
@@ -427,7 +446,8 @@ function renderPanel() {
     const c = {}; sel.forEach(u => c[u.type] = (c[u.type] || 0) + 1);
     h = '<b>' + Object.entries(c).map(([t, n]) => `${n} ${UNIT[t].label.toLowerCase()}${n > 1 && !t.endsWith('s') ? 's' : ''}`).join(', ') + '</b>';
     if (sel.length === 1) h += ` — PV ${Math.ceil(sel[0].hp)}/${sel[0].maxHp}`;
-    if (c.villageois) h += '<br>' + btn('place:maison', `Maison (${costTxt(BUILD.maison.cost)})`, canPay(0, BUILD.maison.cost)) + btn('place:caserne', `Caserne (${costTxt(BUILD.caserne.cost)})`, canPay(0, BUILD.caserne.cost));
+    h += '<br>' + btn('stop', '⏹ Arrêter' + (isTouch ? '' : ' (X)'), true);
+    if (c.villageois) h += btn('place:maison', `Maison (${costTxt(BUILD.maison.cost)})`, canPay(0, BUILD.maison.cost)) + btn('place:caserne', `Caserne (${costTxt(BUILD.caserne.cost)})`, canPay(0, BUILD.caserne.cost));
   } else h = isTouch ? '<i>Touchez une unité pour la sélectionner</i>' : '<i>Aucune sélection</i>';
   if (h !== panelHTML) { panelHTML = h; $('panel').innerHTML = h; }
 }
@@ -436,11 +456,15 @@ function doAct(a) {
   const [k, v] = a.split(':');
   if (k === 'train' && selBuilding) { if (!train(selBuilding, v)) msg('Ressources ou population insuffisantes'); }
   else if (k === 'place') { if (canPay(0, BUILD[v].cost)) startPlacing(v); else msg('Ressources insuffisantes'); }
+  else if (k === 'stop') selUnits().forEach(u => { u.cmd = null; u.target = null; u.path = []; })
+  else if (k === 'cancelq' && selBuilding) { const b = selBuilding, i = +v, t = b.queue[i]; if (t) { b.queue.splice(i, 1); Object.entries(UNIT[t].cost).forEach(([r, n]) => teams[0].res[r] += n); if (i === 0 && b.queue.length) b.trainT = UNIT[b.queue[0]].time; } }
+  else if (k === 'cancelb' && selBuilding && !selBuilding.done) { Object.entries(BUILD[selBuilding.type].cost).forEach(([r, n]) => teams[0].res[r] += n); kill(selBuilding); msg('Construction annulée, ressources remboursées'); }
+  else if (k === 'rally' && selBuilding) { rallyMode = !rallyMode; if (rallyMode) msg(isTouch ? 'Touchez le point de ralliement (sol ou ressource)' : 'Cliquez le point de ralliement (ou clic droit)'); }
   else if (k === 'box') { boxMode = !boxMode; msg(boxMode ? 'Mode cadre : glissez pour sélectionner' : 'Mode cadre désactivé'); }
   else if (k === 'atk') { if (selUnits().length) { atkMode = !atkMode; if (atkMode) msg(isTouch ? 'Touchez la destination de l\'attaque' : 'Cliquez la destination de l\'attaque'); } else msg('Sélectionnez des unités'); }
   else if (k === 'army') setSel(units.filter(u => u.team === 0 && u.type !== 'villageois'));
   else if (k === 'home') { const h = hdvOf(0); if (h) { camTarget.copy(h.pos); updateCam(); } }
-  else if (k === 'desel') { setSel([]); stopPlacing(); atkMode = false; }
+  else if (k === 'desel') { setSel([]); stopPlacing(); atkMode = false; rallyMode = false; }
   document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('on', (b.dataset.act === 'box' && boxMode) || (b.dataset.act === 'atk' && atkMode)));
   updateHUD();
 }
@@ -493,6 +517,13 @@ function command(x, y, attackMove = false) {
   } else { formation(sel, point, 'move'); marker(point, 0xffff00); }
   return true;
 }
+function setRally(x, y) {
+  const b = selBuilding; rallyMode = false; if (!b || b.team !== 0) return;
+  const { ent, point } = pickEntity(x, y), res = ent?.kind === 'resource' ? ent : null, pos = res ? res.pos.clone() : point;
+  b.rally = { pos, res };
+  if (!b.flag) { b.flag = new THREE.Group(); b.flag.add(mk(new THREE.CylinderGeometry(0.05, 0.05, 2), 0x333333, 1)); b.flag.add(mk(new THREE.BoxGeometry(0.8, 0.5, 0.05), TEAM_COLOR[0], 1.7).translateX(0.4)); scene.add(b.flag); }
+  b.flag.position.set(pos.x, 0, pos.z); marker(pos, 0x4080ff); msg('Point de ralliement défini' + (res ? ' (récolte : ' + RES_LABEL[res.type] + ')' : ''));
+}
 function clickSelect(x, y, add) {
   const { ent } = pickEntity(x, y);
   if (ent?.kind === 'unit' && ent.team === 0) {
@@ -507,9 +538,15 @@ let lastTap = { ent: null, t: 0 };
 const onScreen = p => { const [x, y] = screenOf(p); return x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight; };
 function tap(x, y) {
   if (placing) return tryPlace(x, y);
+  if (rallyMode) { setRally(x, y); return doAct('noop'); }
   if (atkMode) { command(x, y, true); doAct('noop'); atkMode = false; doAct('noop'); return; }
   const { ent } = pickEntity(x, y), sel = selUnits();
   if (ent?.kind === 'unit' && ent.team === 0) return clickSelect(x, y, false);
+  if (ent?.kind === 'building' && ent.team === 0) {
+    const v = sel.filter(u => u.type === 'villageois');
+    if (v.length && (!ent.done || (ent.type === 'hdv' && v.some(u => u.carry > 0)))) return command(x, y);
+    setSel([]); selBuilding = ent; return;
+  }
   if (sel.length) return command(x, y);
   clickSelect(x, y, false);
 }
@@ -523,7 +560,7 @@ function drawBox(g, x, y) { Object.assign(box.style, { display: 'block', left: M
 const keys = {}; const mouse = { x: innerWidth / 2, y: innerHeight / 2, in: false };
 addEventListener('keydown', e => {
   const k = e.key.toLowerCase(); keys[k] = true;
-  if (k === 'escape') doAct('desel'); if (k === 'f') doAct('atk'); if (k === 'h') doAct('home');
+  if (k === 'escape') doAct('desel'); if (k === 'x') doAct('stop'); if (k === 'f') doAct('atk'); if (k === 'h') doAct('home');
 });
 addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
@@ -540,13 +577,23 @@ cv.addEventListener('pointerdown', e => {
   ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (e.pointerType === 'mouse') {
     mouse.in = true;
-    if (e.button === 2) { if (placing) stopPlacing(); else if (atkMode) { atkMode = false; doAct('noop'); } else command(e.clientX, e.clientY); return; }
+    if (e.button === 2) { if (rallyMode || (selBuilding?.team === 0 && !selUnits().length && selBuilding.done)) { setRally(e.clientX, e.clientY); doAct('noop'); return; } if (placing) stopPlacing(); else if (atkMode) { atkMode = false; doAct('noop'); } else command(e.clientX, e.clientY); return; }
     if (e.button !== 0) return;
     if (placing) return tryPlace(e.clientX, e.clientY);
+    if (rallyMode) { setRally(e.clientX, e.clientY); doAct('noop'); return; }
     if (atkMode) { command(e.clientX, e.clientY, true); atkMode = false; doAct('noop'); return; }
     gest = { type: 'mpending', sx: e.clientX, sy: e.clientY, shift: e.shiftKey }; return;
   }
-  if (ptrs.size === 1) gest = { type: boxMode ? 'box' : 'tpending', sx: e.clientX, sy: e.clientY, lx: e.clientX, ly: e.clientY, shift: false };
+  if (ptrs.size === 1) {
+    const g = gest = { type: boxMode ? 'box' : 'tpending', sx: e.clientX, sy: e.clientY, lx: e.clientX, ly: e.clientY, shift: false };
+    g.lp = setTimeout(() => { // appui long = sélection
+      if (gest !== g || g.type !== 'tpending') return; const { ent } = pickEntity(g.sx, g.sy);
+      if (ent?.kind === 'unit' && ent.team === 0) { ent.selected = true; selBuilding = null; }
+      else if (ent?.kind === 'building') { setSel([]); selBuilding = ent; }
+      else return;
+      g.type = 'done'; navigator.vibrate?.(30); updateHUD();
+    }, 500);
+  }
   else if (ptrs.size === 2) { gest = { type: 'pinch', ...pinchInfo() }; box.style.display = 'none'; }
 });
 cv.addEventListener('pointermove', e => {
@@ -556,14 +603,14 @@ cv.addEventListener('pointermove', e => {
   if (!gest || !ptrs.has(e.pointerId)) return;
   const moved = Math.hypot(e.clientX - gest.sx, e.clientY - gest.sy);
   if (gest.type === 'mpending' && moved > 5) gest.type = 'box';
-  if (gest.type === 'tpending' && moved > 12) gest.type = 'pan';
+  if (gest.type === 'tpending' && moved > 12) { gest.type = 'pan'; clearTimeout(gest.lp); }
   if (gest.type === 'pan') { panBy(e.clientX - gest.lx, e.clientY - gest.ly); gest.lx = e.clientX; gest.ly = e.clientY; }
   else if (gest.type === 'box') drawBox(gest, e.clientX, e.clientY);
   else if (gest.type === 'pinch' && ptrs.size >= 2) { const p = pinchInfo(); camDist *= gest.d / p.d; panBy(p.mx - gest.mx, p.my - gest.my); Object.assign(gest, p); }
 });
 function endPtr(e) {
   if (!ptrs.has(e.pointerId)) return; ptrs.delete(e.pointerId); if (!gest) return;
-  const x = e.clientX, y = e.clientY;
+  const x = e.clientX, y = e.clientY; clearTimeout(gest.lp);
   if (gest.type === 'mpending') clickSelect(x, y, gest.shift);
   else if (gest.type === 'tpending') tap(x, y);
   else if (gest.type === 'box') { box.style.display = 'none'; boxSelect(gest.sx, gest.sy, x, y, gest.shift); }
@@ -617,7 +664,7 @@ function loop() {
   if (k.a || k.q || k.arrowleft || (m && mouse.x < e)) { camTarget.x -= sp; mv = true; }
   if (k.d || k.arrowright || (m && mouse.x > innerWidth - e)) { camTarget.x += sp; mv = true; }
   if (mv) updateCam();
-  if (!gameOver) for (let i = 0; i < SPEED; i++) step(rdt);
+  if (!gameOver && started) for (let i = 0; i < SPEED; i++) step(rdt);
   for (let i = arrows.length - 1; i >= 0; i--) { const a = arrows[i]; a.t += rdt * SPEED / a.dur; if (a.t >= 1) { scene.remove(a.m); arrows.splice(i, 1); continue; } a.m.position.lerpVectors(a.a, a.b, a.t); a.m.position.y += Math.sin(a.t * Math.PI) * 1.5; a.m.lookAt(a.b); }
   fogT -= rdt; if (fogT <= 0) { fogT = 0.2; updateFog(); }
   miniT -= rdt; if (miniT <= 0) { miniT = 0.25; drawMini(); }
@@ -633,4 +680,6 @@ function loop() {
   renderer.render(scene, camera); requestAnimationFrame(loop);
 }
 updateFog(); updateHUD(); loop();
-window.__game = { units, buildings, resources, teams, ai, THREE, cmdMove, cmdGather, cmdAttack, screenOf, camTarget, get camDist() { return camDist; }, get over() { return gameOver; }, endGame };
+if (!started) $('start').style.display = 'flex';
+$('start').addEventListener('click', e => { const k = e.target.closest('button')?.dataset.diff; if (!k) return; D = DIFFS[k]; ai.nextWave = D.first; started = true; $('start').style.display = 'none'; msg('Difficulté : ' + D.label); });
+window.__game = { get D() { return D; }, doAct, setRally, pickEntity, get selBuilding() { return selBuilding; }, set selBuilding(b) { selBuilding = b; }, units, buildings, resources, teams, ai, THREE, cmdMove, cmdGather, cmdAttack, screenOf, camTarget, get camDist() { return camDist; }, get over() { return gameOver; }, endGame };
