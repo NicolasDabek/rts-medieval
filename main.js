@@ -326,7 +326,9 @@ function canTech(b, id) {
 function research(b, id) { if (canTech(b, id)) return false; const t = TECHS[id]; pay(b.team, t.cost); enqueue(b, { kind: 'tech', id, time: t.time, cost: t.cost }); return true; }
 function canAge(b) {
   const T = teams[b.team]; if (b.type !== 'hdv' || T.age >= 3 || inQueue(b.team, 'age')) return 'x';
-  if (!b.done) return 'En construction'; if (!canPay(b.team, AGES[T.age + 1].cost)) return 'Ressources insuffisantes'; return null;
+  if (!b.done) return 'En construction';
+  if (T.age === 0 && !buildings.some(o => o.team === b.team && o.done && !['hdv', 'maison', 'ferme'].includes(o.type) && !o.def.wall)) return '🔒 1 bâtiment (moulin, camp ou caserne)';
+  if (!canPay(b.team, AGES[T.age + 1].cost)) return 'Ressources insuffisantes'; return null;
 }
 function ageUp(b) { if (canAge(b)) return false; const T = teams[b.team], a = AGES[T.age + 1]; pay(b.team, a.cost); enqueue(b, { kind: 'age', id: T.age + 1, time: a.time, cost: a.cost }); return true; }
 function enqueue(b, item) { b.queue.push(item); if (b.queue.length === 1) b.trainT = item.time; }
@@ -412,7 +414,7 @@ function hit(src, srcDef, srcTeam, t) {
   if (srcDef.splash) for (const o of [...units, ...buildings]) if (o !== t && o.team !== srcTeam && !o.dead && d2(o.pos, t.pos) < srcDef.splash + o.radius) damage(o, calcDmg(srcDef, srcTeam, o) * 0.5, src);
 }
 function damage(t, dmg, src) {
-  if (t.dead) return; t.hp -= dmg;
+  if (t.dead) return; t.hp -= dmg; t.lastHit = gameTime;
   if (t.kind === 'unit' && src && src.kind === 'unit' && !src.dead && !t.target && t.def.aggro && (!t.cmd || t.cmd.type !== 'move') && !(t.def.siegeOnly)) t.target = src;
   if (t.team === 1 && src && src.kind === 'unit') aiDefend(src);
   if (t.hp <= 0) kill(t);
@@ -438,7 +440,7 @@ function nextJob(u, b) { // après une construction : chantier voisin, ferme, ou
 }
 function updateUnit(u, dt) {
   const S = u.def, T = teams[u.team]; u.cdT -= dt;
-  if (S.regen && u.hp < u.maxHp) u.hp = Math.min(u.maxHp, u.hp + S.regen * dt);
+  if (S.regen && u.hp < u.maxHp && gameTime - (u.lastHit || -99) > 5) u.hp = Math.min(u.maxHp, u.hp + S.regen * dt);
   if (!u.target && S.aggro && (!u.cmd || u.cmd.type === 'attackMove')) { u.scanT -= dt; if (u.scanT <= 0) { u.scanT = 0.4; const t = nearestEnemy(u, S.aggro, S.siegeOnly); if (t) { u.target = t; u.repathT = 0; } } }
   if (u.target) {
     const t = u.target;
@@ -584,7 +586,9 @@ function aiDefend(src) {
 const playerCls = c => units.filter(u => u.team === 0 && u.def.cls === c).length;
 function aiPickUnit(b) {
   const opts = Object.keys(UNIT).filter(k => UNIT[k].b === b.type && k !== 'villageois' && k !== 'heros' && !canTrain(b, k)); if (!opts.length) return null;
-  if (opts.includes('lancier') && playerCls('cav') >= 3) return 'lancier';
+  const COUNTER = { cav: 'lancier', inf: 'archer', arch: 'cavalier', siege: 'cavalier' };
+  const major = ['cav', 'inf', 'arch', 'siege'].map(c => [c, playerCls(c)]).sort((a, b) => b[1] - a[1])[0];
+  if (major[1] >= 3 && opts.includes(COUNTER[major[0]]) && Math.random() < 0.7) return COUNTER[major[0]];
   if (b.type === 'atelier' && units.filter(u => u.team === 1 && u.def.cls === 'siege').length >= 2 + teams[1].age) return null;
   return opts[Math.floor(Math.random() * opts.length)];
 }
@@ -623,7 +627,7 @@ function aiUpdate(dt) {
   const need = Math.min([0, 9, 14, 18][T.age + 1] * D.ageK, vmax);
   if (T.age < 3 && vills.length >= need && ai.t >= D.ageT[T.age + 1] && !h.queue.length) ageUp(h);
   // technologies (si riche)
-  if (Math.random() < 0.3) for (const b of mine) for (const id of Object.keys(TECHS)) if (!canTech(b, id) && Object.entries(TECHS[id].cost).every(([k, v]) => T.res[k] >= v * 1.8)) research(b, id);
+  if (Math.random() < 0.5) for (const b of mine) for (const id of Object.keys(TECHS)) if (!canTech(b, id) && Object.entries(TECHS[id].cost).every(([k, v]) => T.res[k] >= v * 1.3)) research(b, id);
   // armée
   const threatened = units.some(u => u.team === 0 && u.def.cls !== 'villager' && d2(u.pos, h.pos) < 30);
   const ageCost = T.age < 3 ? AGES[T.age + 1].cost : null, saving = ageCost && vills.length >= need * 0.8 && ai.t > D.ageT[T.age + 1] - 60;
@@ -637,7 +641,8 @@ function aiUpdate(dt) {
   const threat = units.find(u => u.team === 0 && d2(u.pos, h.pos) < 25); if (threat) aiDefend(threat);
   if (ai.t > ai.nextWave) {
     const idle = army.filter(s => !s.target && s.type !== 'heros' || (s.type === 'heros' && ai.waveN >= 2)), n = Math.min(idle.length, D.base + ai.waveN * D.grow);
-    const tgt = hdvOf(0) || buildings.find(b => b.team === 0);
+    const eco = buildings.filter(b => b.team === 0 && b.done && ['moulin', 'camp_bois', 'camp_mine'].includes(b.type));
+    const tgt = (ai.waveN > 0 && eco.length && Math.random() < 0.35 ? eco[Math.floor(Math.random() * eco.length)] : null) || hdvOf(0) || buildings.find(b => b.team === 0);
     if (n >= Math.min(3, D.base) && tgt) {
       idle.slice(0, n).forEach(s => cmdMove(s, tgt.pos, 'attackMove'));
       ai.waveN++; ai.nextWave = ai.t + Math.max(D.interval * 0.6, D.interval - ai.waveN * 10); msg(`⚔ Vague ennemie n°${ai.waveN} en approche (${n} unités) !`, 5000); sfx('horn');
