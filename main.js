@@ -65,7 +65,7 @@ function free(x, z, r, ign) {
   return true;
 }
 function wallFree(x, z, ignoreGateWalls = false) {
-  if (!inMap(x, z, 0.6)) return false;
+  if (Math.abs(x) > HALF - 0.4 || Math.abs(z) > HALF - 0.4) return false;
   for (const o of resources) if (Math.hypot(o.pos.x - x, o.pos.z - z) < o.radius + 0.7) return false;
   for (const o of buildings) { const d = Math.hypot(o.pos.x - x, o.pos.z - z); if (o.def.wall ? d < 0.5 : d < o.radius + 0.8) return false; }
   return true;
@@ -129,6 +129,7 @@ function addBuilding(type, team, x, z, done = true, rot = 0, noGrid = false) {
   g.position.set(x, 0, z); g.rotation.y = rot; scene.add(g);
   const maxHp = Math.round(S.hp * teams[team].up.bhp);
   const b = { kind: 'building', type, def: S, team, radius: S.radius, mesh: g, inner, pos: g.position, rot, maxHp, hp: done ? maxHp : maxHp * 0.1, done, progress: done ? 1 : 0, queue: [], trainT: 0, cdT: 0 };
+  if (S.gate) b.parts = [-1.6, -0.8, 0, 0.8, 1.6].map(o => ({ pos: { x: x + Math.cos(rot) * o, z: z - Math.sin(rot) * o }, radius: 0.75 }));
   if (S.farm) { b.amount = S.farm + teams[team].up.farm; b.resType = 'nourriture'; b.rate = 0.6; }
   if (!done) inner.scale.y = 0.1;
   tag(b); makeBar(b, Math.max(1.2, S.radius * 1.2), S.bar); buildings.push(b); if (!noGrid) rebuildGrid(); return b;
@@ -179,7 +180,7 @@ function rebuildGrid() {
   for (const o of resources) stamp(g, o);
   for (const b of buildings) if (!b.def.farm && !b.def.gate) stamp(g, b);
   const g0 = g.slice(), g1 = g;
-  for (const b of buildings) if (b.def.gate) stamp(b.team === 0 ? g1 : g0, b);
+  for (const b of buildings) if (b.def.gate) b.parts.forEach(pt => stamp(b.team === 0 ? g1 : g0, pt));
   gridT = [g0, g1];
 }
 const toCell = v => [Math.max(0, Math.min(N - 1, Math.floor(v.x) + HALF)), Math.max(0, Math.min(N - 1, Math.floor(v.z) + HALF))];
@@ -348,7 +349,7 @@ function placeBuilding(type, team, x, z, rot = 0) {
   if (S.gate) { // une porte remplace les segments de mur qu'elle recouvre
     const own = o => o.def.wall && o.team === team;
     if (!free(x, z, S.radius, own)) return null;
-    buildings.filter(o => own(o) && d2(o.pos, { x, z }) < S.radius + 0.7).forEach(w => kill(w, true));
+    buildings.filter(o => own(o) && d2(o.pos, { x, z }) < S.radius + 0.3).forEach(w => kill(w, true));
   } else if (!free(x, z, S.radius)) return null;
   pay(team, S.cost); return addBuilding(type, team, x, z, false, rot);
 }
@@ -488,7 +489,7 @@ function updateUnit(u, dt) {
     const dx = u.pos.x - o.pos.x, dz = u.pos.z - o.pos.z, d = dx * dx + dz * dz, m = (u.radius + o.radius) * 0.9;
     if (d < m * m && d > 1e-8) { const dd = Math.sqrt(d), p = (m - dd) * yl; u.pos.x += dx / dd * p; u.pos.z += dz / dd * p; }
   }
-  for (const o of buildings) if (!o.def.farm && !(o.def.gate && o.team === u.team) && Math.abs(o.pos.x - u.pos.x) < o.radius + 2 && Math.abs(o.pos.z - u.pos.z) < o.radius + 2) pushOut(u, o);
+  for (const o of buildings) if (!o.def.farm && !(o.def.gate && o.team === u.team) && Math.abs(o.pos.x - u.pos.x) < o.radius + 2 && Math.abs(o.pos.z - u.pos.z) < o.radius + 2) { if (o.parts) o.parts.forEach(pt => pushOut(u, pt)); else pushOut(u, o); }
   for (const o of resources) if (Math.abs(o.pos.x - u.pos.x) < 3 && Math.abs(o.pos.z - u.pos.z) < 3) pushOut(u, o);
   u.pos.x = Math.max(-HALF + 0.5, Math.min(HALF - 0.5, u.pos.x)); u.pos.z = Math.max(-HALF + 0.5, Math.min(HALF - 0.5, u.pos.z));
   u.body.position.y = moving && S.cls !== 'siege' ? Math.abs(Math.sin(performance.now() / 90)) * 0.12 : 0;
@@ -990,5 +991,5 @@ export function boot(skipMap = false) {
   camTarget.copy(hdvOf(0)?.pos || P0); updateCam(); updateFog(); updateHUD(); loop();
   if (!started) $('start').style.display = 'flex';
   $('start').addEventListener('click', e => { const k = e.target.closest('button')?.dataset.diff; if (!k) return; D = DIFFS[k]; ai.nextWave = D.first; started = true; $('start').style.display = 'none'; msg('Difficulté : ' + D.label); unlockAudio(); });
-  if (D) ai.nextWave = D.first;
+  if (D && !skipMap) ai.nextWave = D.first;
 }

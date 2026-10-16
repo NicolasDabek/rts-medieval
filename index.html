@@ -17,6 +17,7 @@ button:disabled{opacity:.4}
 #panel .b .i{font-size:22px;line-height:1.1}#panel .b .t{font-size:10.5px;line-height:1.1}#panel .b .c{font-size:10px;opacity:.85}
 .por{position:relative;font-size:22px;min-width:40px;min-height:40px;margin:2px;padding:2px 4px;background:#3a2810}.por sub{font-size:10px;position:absolute;right:2px;bottom:0}.por.big{display:inline-block;border:1px solid #c9a35a;border-radius:6px;text-align:center}
 #panel .q{margin-top:4px}
+#extra button{font-size:15px;padding:1px 6px;margin-left:4px;background:transparent;border-color:#8a6a3a}
 #tools button.warn{background:#a04010}
 #tools button[data-n]:not([data-n="0"])::after{content:attr(data-n);position:absolute;font-size:11px;margin:22px 0 0 14px;color:#fff}
 #tools{position:fixed;left:6px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:5}
@@ -56,6 +57,7 @@ button:disabled{opacity:.4}
 <div id="help">Clic gauche / glisser : sélection (Maj = ajouter) · Clic droit : déplacer / récolter / attaquer / construire<br>F + clic : attaque-déplacement · R : pivoter · . : villageois inactif · WASD/ZQSD/flèches/bords : caméra · Molette : zoom · H : base · Échap : annuler</div>
 <div id="start"><h1>⚔ RTS Médiéval</h1><p>Détruisez l'hôtel de ville ennemi (rouge). Choisissez la difficulté :</p>
 <div class="row"><button data-diff="facile">Facile</button><button data-diff="normal">Normal</button><button data-diff="difficile">Difficile</button></div>
+<p><button id="loadBtn" style="display:none">📂 Reprendre la partie sauvegardée</button></p>
 <p class="small">Facile : vagues petites et tardives (~8 min) · Normal : 1re vague vers 5:30 · Difficile : IA plus rapide avec bonus de ressources</p></div>
 <div id="end"><h1 id="endTitle"></h1><p id="endSub"></p><button onclick="location.reload()">Rejouer</button></div>
 <script type="module" src="./app.js"></script>
