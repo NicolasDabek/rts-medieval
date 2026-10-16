@@ -11,7 +11,14 @@ canvas{display:block;touch-action:none}
 #panel{position:fixed;bottom:0;left:0;padding:8px 10px;padding-bottom:max(8px,env(safe-area-inset-bottom));min-width:280px;max-width:520px;min-height:56px;z-index:5;font-size:14px}
 button{font:inherit;background:#6b4a22;color:#fff;border:1px solid #c9a35a;border-radius:6px;cursor:pointer;touch-action:manipulation}
 button:disabled{opacity:.4}
-#panel button{margin:3px;padding:6px 10px;min-height:40px}
+#panel{max-height:46vh;overflow-y:auto}
+#panel .hd{margin-bottom:4px}
+#panel .b{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:78px;min-height:64px;margin:2px;padding:3px;vertical-align:top}
+#panel .b .i{font-size:22px;line-height:1.1}#panel .b .t{font-size:10.5px;line-height:1.1}#panel .b .c{font-size:10px;opacity:.85}
+.por{position:relative;font-size:22px;min-width:40px;min-height:40px;margin:2px;padding:2px 4px;background:#3a2810}.por sub{font-size:10px;position:absolute;right:2px;bottom:0}.por.big{display:inline-block;border:1px solid #c9a35a;border-radius:6px;text-align:center}
+#panel .q{margin-top:4px}
+#tools button.warn{background:#a04010}
+#tools button[data-n]:not([data-n="0"])::after{content:attr(data-n);position:absolute;font-size:11px;margin:22px 0 0 14px;color:#fff}
 #tools{position:fixed;left:6px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:5}
 #tools button{width:52px;height:52px;font-size:20px;background:rgba(60,40,15,.85)}
 #tools button.on{background:#c9a35a;color:#000}
@@ -27,26 +34,29 @@ button:disabled{opacity:.4}
  #hud{font-size:13px;gap:2px 12px}
  #help{display:none}
  #panel{right:0;max-width:none;min-width:0}
- #panel button{min-height:46px;padding:8px 12px}
+ #panel .b{width:70px;min-height:60px}
+ #panel{max-height:38vh}
+ #tools button{width:46px;height:46px;font-size:18px}
  #mini{top:auto;bottom:auto;top:calc(52px + env(safe-area-inset-top));right:6px;width:116px;height:116px}
 }
 </style>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head><body>
-<div id="hud" class="ui"><span>🪵 <b id="bois">0</b></span><span>🪨 <b id="pierre">0</b></span><span>💰 <b id="or">0</b></span><span>👥 <b id="pop">0</b></span><span>⏱ <b id="time">0:00</b></span></div>
+<div id="hud" class="ui"><span title="Nourriture">🍖 <b id="nourriture">0</b></span><span title="Bois">🪵 <b id="bois">0</b></span><span title="Or">💰 <b id="or">0</b></span><span title="Pierre">🪨 <b id="pierre">0</b></span><span title="Population">👥 <b id="pop">0</b></span><span title="Époque">🏛 <b id="age"></b></span><span>⏱ <b id="time">0:00</b></span><span id="extra"></span></div>
 <div id="tools">
  <button data-act="box" title="Mode sélection par cadre">▭</button>
  <button data-act="atk" title="Attaque-déplacement (F)">⚔</button>
  <button data-act="army" title="Sélectionner toute l'armée">🛡</button>
  <button data-act="home" title="Centrer sur l'hôtel de ville (H)">🏰</button>
+ <button data-act="idle" id="idleBtn" title="Villageois inactif (. ou I)">💤</button>
  <button data-act="desel" title="Tout désélectionner (Échap)">✖</button>
 </div>
 <div id="panel" class="ui"></div><div id="box"></div><div id="msg"></div>
 <canvas id="mini" width="160" height="160"></canvas>
-<div id="help">Clic gauche / glisser : sélection (Maj = ajouter) · Clic droit : déplacer / récolter / attaquer / construire<br>F + clic : attaque-déplacement · WASD/ZQSD/flèches/bords : caméra · Molette : zoom · H : base · Échap : annuler</div>
+<div id="help">Clic gauche / glisser : sélection (Maj = ajouter) · Clic droit : déplacer / récolter / attaquer / construire<br>F + clic : attaque-déplacement · R : pivoter · . : villageois inactif · WASD/ZQSD/flèches/bords : caméra · Molette : zoom · H : base · Échap : annuler</div>
 <div id="start"><h1>⚔ RTS Médiéval</h1><p>Détruisez l'hôtel de ville ennemi (rouge). Choisissez la difficulté :</p>
 <div class="row"><button data-diff="facile">Facile</button><button data-diff="normal">Normal</button><button data-diff="difficile">Difficile</button></div>
 <p class="small">Facile : vagues petites et tardives (~8 min) · Normal : 1re vague vers 5:30 · Difficile : IA plus rapide avec bonus de ressources</p></div>
 <div id="end"><h1 id="endTitle"></h1><p id="endSub"></p><button onclick="location.reload()">Rejouer</button></div>
-<script type="module" src="./main.js"></script>
+<script type="module" src="./app.js"></script>
 </body></html>
