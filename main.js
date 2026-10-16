@@ -59,10 +59,20 @@ const resources = [], buildings = [], units = [], arrows = [];
 const rand = (a, b) => a + Math.random() * (b - a);
 const d2 = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const inMap = (x, z, r) => Math.abs(x) <= HALF - r - 1 && Math.abs(z) <= HALF - r - 1;
-function free(x, z, r, ign) {
-  if (!inMap(x, z, r)) return false;
-  for (const o of resources) if (Math.hypot(o.pos.x - x, o.pos.z - z) < o.radius + r) return false;
-  for (const o of buildings) if (!(ign && ign(o)) && Math.hypot(o.pos.x - x, o.pos.z - z) < o.radius + r + (o.def.wall ? 0.2 : 1)) return false;
+// emprise : rectangle (demi-largeurs selon la rotation) ou cercle
+// distance d'un point au bord d'une entité (rectangle si emprise, sinon cercle)
+function edgeD(p, o) { if (!o.ext) return d2(p, o.pos) - (o.radius || 0.5); return Math.hypot(Math.max(0, Math.abs(p.x - o.pos.x) - o.ext[0]), Math.max(0, Math.abs(p.z - o.pos.z) - o.ext[1])); }
+function extOf(type, rot = 0) { const f = BUILD[type]?.fp; if (!f) return null; return Math.round(rot / (Math.PI / 2)) % 2 ? [f[1] / 2, f[0] / 2] : [f[0] / 2, f[1] / 2]; }
+function overlap(ax, az, ar, ae, bx, bz, br, be, m) {
+  const dx = Math.abs(ax - bx), dz = Math.abs(az - bz);
+  if (ae && be) return dx < ae[0] + be[0] + m && dz < ae[1] + be[1] + m;
+  if (ae || be) { const e = ae || be, r = ae ? br : ar; const cx = Math.max(0, dx - e[0]), cz = Math.max(0, dz - e[1]); return Math.hypot(cx, cz) < r + m; }
+  return Math.hypot(dx, dz) < ar + br + m;
+}
+function free(x, z, r, ign, e = null) {
+  if (!inMap(x, z, e ? Math.max(e[0], e[1]) : r)) return false;
+  for (const o of resources) if (overlap(x, z, r, e, o.pos.x, o.pos.z, o.radius, null, 0)) return false;
+  for (const o of buildings) if (!(ign && ign(o)) && overlap(x, z, r, e, o.pos.x, o.pos.z, o.radius, o.ext, o.def.wall ? 0.2 : 1)) return false;
   return true;
 }
 function wallFree(x, z, ignoreGateWalls = false) {
@@ -129,7 +139,7 @@ function addBuilding(type, team, x, z, done = true, rot = 0, noGrid = false) {
   const S = BUILD[type], g = new THREE.Group(), inner = buildingMesh(type, team); g.add(inner);
   g.position.set(x, 0, z); g.rotation.y = rot; scene.add(g);
   const maxHp = Math.round(S.hp * teams[team].up.bhp);
-  const b = { kind: 'building', type, def: S, team, radius: S.radius, mesh: g, inner, pos: g.position, rot, maxHp, hp: done ? maxHp : maxHp * 0.1, done, progress: done ? 1 : 0, queue: [], trainT: 0, cdT: 0 };
+  const b = { kind: 'building', type, def: S, team, radius: S.radius, ext: extOf(type, rot), mesh: g, inner, pos: g.position, rot, maxHp, hp: done ? maxHp : maxHp * 0.1, done, progress: done ? 1 : 0, queue: [], trainT: 0, cdT: 0 };
   if (S.gate) b.parts = [-1.6, -0.8, 0, 0.8, 1.6].map(o => ({ pos: { x: x + Math.cos(rot) * o, z: z - Math.sin(rot) * o }, radius: 0.75 }));
   if (S.farm) { b.amount = S.farm + teams[team].up.farm; b.resType = 'nourriture'; b.rate = 0.6; }
   if (!done) inner.scale.y = 0.1;
@@ -172,13 +182,19 @@ function addUnit(type, team, x, z) {
 // ================= Pathfinding (A*, grille par équipe : les portes laissent passer leur camp) =================
 const N = SIZE; let gridT = [new Uint8Array(N * N), new Uint8Array(N * N)];
 function stamp(g, o) {
+  if (o.ext) {
+    const hw = o.ext[0] + 0.3, hd = o.ext[1] + 0.3;
+    for (let x = Math.floor(o.pos.x - hw); x <= o.pos.x + hw; x++) for (let z = Math.floor(o.pos.z - hd); z <= o.pos.z + hd; z++)
+      if (Math.abs(x + 0.5 - o.pos.x) < hw && Math.abs(z + 0.5 - o.pos.z) < hd) { const i = x + HALF, j = z + HALF; if (i >= 0 && j >= 0 && i < N && j < N) g[i + j * N] = 1; }
+    return;
+  }
   const r = o.radius + 0.3;
   for (let x = Math.floor(o.pos.x - r); x <= o.pos.x + r; x++) for (let z = Math.floor(o.pos.z - r); z <= o.pos.z + r; z++)
     if (Math.hypot(x + 0.5 - o.pos.x, z + 0.5 - o.pos.z) < r) { const i = x + HALF, j = z + HALF; if (i >= 0 && j >= 0 && i < N && j < N) g[i + j * N] = 1; }
 }
 function rebuildGrid() {
   const g = new Uint8Array(N * N);
-  for (const o of resources) stamp(g, o);
+  for (const o of resources) if (o.sub !== 'cerf') stamp(g, o); // les cerfs bougent : hors grille
   for (const b of buildings) if (!b.def.farm && !b.def.gate) stamp(g, b);
   const g0 = g.slice(), g1 = g;
   for (const b of buildings) if (b.def.gate) b.parts.forEach(pt => stamp(b.team === 0 ? g1 : g0, pt));
@@ -305,7 +321,7 @@ const queuedUnits = (t, type) => buildings.reduce((s, b) => s + (b.team === t ? 
 const popCount = t => units.filter(u => u.team === t).length + queuedUnits(t);
 const hdvOf = t => buildings.find(b => b.team === t && b.type === 'hdv');
 const resTypeOf = r => r.kind === 'building' ? 'nourriture' : r.type;
-function dropFor(t, type, p) { let best = null, bd = 1e9; for (const b of buildings) if (b.team === t && b.done && b.def.drop?.includes(type)) { const d = d2(b.pos, p) - b.radius; if (d < bd) { bd = d; best = b; } } return best; }
+function dropFor(t, type, p) { let best = null, bd = 1e9; for (const b of buildings) if (b.team === t && b.done && b.def.drop?.includes(type)) { const d = edgeD(p, b); if (d < bd) { bd = d; best = b; } } return best; }
 function nearestRes(type, p, max = 1e9) { let b = null, bd = max; for (const r of resources) { const d = d2(r.pos, p); if ((!type || r.type === type) && d < bd) { bd = d; b = r; } } return b; }
 const inQueue = (t, kind, id) => buildings.some(b => b.team === t && b.queue.some(q => q.kind === kind && (id === undefined || q.id === id)));
 const ageLock = a => '🔒 ' + AGES[a].name;
@@ -351,9 +367,9 @@ function placeBuilding(type, team, x, z, rot = 0) {
   const S = BUILD[type]; if (!canPay(team, S.cost)) return null;
   if (S.gate) { // une porte remplace les segments de mur qu'elle recouvre
     const own = o => o.def.wall && o.team === team;
-    if (!free(x, z, S.radius, own)) return null;
+    if (!free(x, z, S.radius, own, extOf(type, rot))) return null;
     buildings.filter(o => own(o) && d2(o.pos, { x, z }) < S.radius + 0.3).forEach(w => kill(w, true));
-  } else if (!free(x, z, S.radius)) return null;
+  } else if (!free(x, z, S.radius, null, extOf(type, rot))) return null;
   pay(team, S.cost); return addBuilding(type, team, x, z, false, rot);
 }
 function placeWall(type, team, a, b) {
@@ -386,13 +402,14 @@ function formation(sel, p, type) {
 }
 
 // ================= Combat =================
+const BLD_PIERCE = 0.85;
 const clsOf = t => t.kind === 'building' ? 'building' : t.def.cls;
 function calcDmg(def, team, t) {
   const up = teams[team].up, soldier = def.cls && def.cls !== 'villager' && def.cls !== 'siege';
   const atk = def.atk + (soldier ? up.atk : 0) + (def.proj === 'arrow' ? up.projAtk : 0) + (def.bonus?.[clsOf(t)] || 0);
   let arm;
   if (t.kind === 'unit') { const td = t.def; arm = (def.proj ? td.ap : td.am) + (td.cls !== 'villager' && td.cls !== 'siege' ? teams[t.team].up.arm : 0); }
-  else arm = def.proj === 'arrow' ? 6 : 2;
+  else { if (def.proj === 'arrow') return Math.max(0.5, Math.round(atk * (1 - BLD_PIERCE) * 10) / 10); arm = 2; } // bâtiments : -85 % contre les flèches
   return Math.max(1, atk - arm);
 }
 const rangeOf = (def, team) => def.range + (def.proj === 'arrow' ? teams[team].up.range : 0);
@@ -400,7 +417,7 @@ function nearestEnemy(u, r, buildingsOnly = false) {
   let best = null, bd = r;
   if (!buildingsOnly) for (const o of units) if (o.team !== u.team) { const d = d2(o.pos, u.pos) - o.radius; if (d < bd) { bd = d; best = o; } }
   if (best) return best;
-  for (const b of buildings) if (b.team !== u.team) { const d = d2(b.pos, u.pos) - b.radius; if (d < bd) { bd = d; best = b; } }
+  for (const b of buildings) if (b.team !== u.team) { const d = edgeD(u.pos, b); if (d < bd) { bd = d; best = b; } }
   return best;
 }
 const stoneGeo = new THREE.SphereGeometry(0.35, 6, 5);
@@ -430,7 +447,12 @@ function kill(e, silent = false) {
 
 // ================= Unités =================
 const RES_COLORS = { bois: 0x6b4423, pierre: 0x8a8a8a, or: 0xe0b630, nourriture: 0xc0203a };
-function pushOut(u, o) { const dx = u.pos.x - o.pos.x, dz = u.pos.z - o.pos.z, d = Math.hypot(dx, dz), m = o.radius + u.radius * 0.8; if (d < m && d > 1e-4) { u.pos.x = o.pos.x + dx / d * m; u.pos.z = o.pos.z + dz / d * m; } }
+function pushOut(u, o) {
+  if (o.ext) { // rectangle : sortie par l'axe de moindre pénétration
+    const m = u.radius * 0.8, dx = u.pos.x - o.pos.x, dz = u.pos.z - o.pos.z, px = o.ext[0] + m - Math.abs(dx), pz = o.ext[1] + m - Math.abs(dz);
+    if (px > 0 && pz > 0) { if (px < pz) u.pos.x += Math.sign(dx || 1) * px; else u.pos.z += Math.sign(dz || 1) * pz; }
+    return;
+  } const dx = u.pos.x - o.pos.x, dz = u.pos.z - o.pos.z, d = Math.hypot(dx, dz), m = o.radius + u.radius * 0.8; if (d < m && d > 1e-4) { u.pos.x = o.pos.x + dx / d * m; u.pos.z = o.pos.z + dz / d * m; } }
 function nextJob(u, b) { // après une construction : chantier voisin, ferme, ou ressource du camp
   const nb = buildings.filter(o => o.team === u.team && !o.done && d2(o.pos, u.pos) < 25).sort((a, c) => d2(a.pos, u.pos) - d2(c.pos, u.pos))[0];
   if (nb) return cmdBuild(u, nb);
@@ -446,8 +468,13 @@ function updateUnit(u, dt) {
     const t = u.target;
     if (t.dead) { u.target = null; u.path = []; if (u.cmd?.type === 'attack') u.cmd = null; else if (u.cmd?.type === 'attackMove') moveTo(u, u.cmd.dest); }
     else {
-      const d = d2(u.pos, t.pos) - (t.radius || 0.5), rng = rangeOf(S, u.team);
-      if (d <= rng) {
+      const d = edgeD(u.pos, t), rng = rangeOf(S, u.team);
+      const kite = S.kite && t.kind === 'unit' && t.def.range < 3 && t.def.cls !== 'siege' && d < 3.2 && u.cdT > 0.25;
+      if (kite) { // recule entre deux tirs face à la mêlée
+        const ax = u.pos.x - t.pos.x, az = u.pos.z - t.pos.z, al = Math.hypot(ax, az) || 1, st = S.speed * dt;
+        const nx = u.pos.x + ax / al * st, nz = u.pos.z + az / al * st, [cx, cz] = toCell({ x: nx, z: nz });
+        if (!gridT[u.team][cx + cz * N] && Math.abs(nx) < HALF - 1 && Math.abs(nz) < HALF - 1) { u.pos.x = nx; u.pos.z = nz; u.path = []; }
+      } else if (d <= rng) {
         u.path = []; u.mesh.rotation.y = Math.atan2(t.pos.x - u.pos.x, t.pos.z - u.pos.z);
         if (u.cdT <= 0) {
           u.cdT = S.cd;
@@ -506,11 +533,13 @@ function updateUnit(u, dt) {
         r = u.cmd.res = rt && (r.kind === 'building' ? buildings.find(f => f.def.farm && f.done && f.team === u.team && !units.some(o => o.cmd?.res === f)) : null) || (rt && nearestRes(rt, u.pos, 30));
         if (!r) { u.cmd = null; return; } moveTo(u, r.pos);
       }
+      if (r.sub === 'cerf' && !r.hunted) { u.repathT -= dt; if (u.repathT <= 0) { u.repathT = 0.6; moveTo(u, r.pos); } }
       const reach = r.kind === 'building' ? 1.6 : r.radius + 1.2;
       if (d2(u.pos, r.pos) < reach) { u.state = 'gather'; u.path = []; u.timer = 0; }
       else if (!u.path.length) moveTo(u, r.pos);
     } else if (u.state === 'gather') {
       if (r.dead) { u.state = 'toRes'; return; }
+      if (r.sub === 'cerf' && !r.hunted) { r.hunted = true; r.mesh.rotation.z = Math.PI / 2; r.mesh.position.y = 0.35; } // chassé : le cerf est abattu
       const rt = resTypeOf(r);
       if (r.kind !== 'building') u.mesh.rotation.y = Math.atan2(r.pos.x - u.pos.x, r.pos.z - u.pos.z);
       u.timer += dt; u.body.rotation.x = Math.sin(u.timer * 12) * 0.2;
@@ -523,14 +552,14 @@ function updateUnit(u, dt) {
       }
     } else if (u.state === 'toDrop') {
       const h = dropFor(u.team, u.carryType || 'bois', u.pos); if (!h) { u.cmd = null; return; }
-      if (d2(u.pos, h.pos) < h.radius + 1.4) { if (u.carryType) T.res[u.carryType] += u.carry; u.carry = 0; u.state = 'toRes'; if (r && !r.dead) moveTo(u, r.pos); }
+      if (edgeD(u.pos, h) < 1.4) { if (u.carryType) T.res[u.carryType] += u.carry; u.carry = 0; u.state = 'toRes'; if (r && !r.dead) moveTo(u, r.pos); }
       else if (!u.path.length) moveTo(u, h.pos);
     }
     u.carryMesh.visible = u.carry > 0; if (u.carryType) u.carryMesh.material.color.set(RES_COLORS[u.carryType]);
   } else if (u.cmd.type === 'build') {
     const b = u.cmd.b;
     if (b.dead || b.done) { nextJob(u, b); return; }
-    if (d2(u.pos, b.pos) < b.radius + 1.5) {
+    if (edgeD(u.pos, b) < 1.5) {
       u.path = []; u.mesh.rotation.y = Math.atan2(b.pos.x - u.pos.x, b.pos.z - u.pos.z); u.timer += dt; u.body.rotation.x = Math.sin(u.timer * 10) * 0.3;
       if (u.team === 0 && Math.random() < dt * 1.5 && isVis(u.pos)) sfx('build', u.pos);
       const inc = dt / b.def.time; b.progress = Math.min(1, b.progress + inc); b.hp = Math.min(b.maxHp, b.hp + inc * b.maxHp * 0.9);
@@ -568,14 +597,15 @@ function updateBuilding(b, dt) {
 
 // ================= IA =================
 const ai = { t: 0, think: 0, nextWave: 300, waveN: 0 };
-function aiSpotNear(p, r, minD, maxD) {
-  for (let k = 0; k < 60; k++) { const a = rand(0, Math.PI * 2), d = rand(minD, maxD), x = p.x + Math.cos(a) * d, z = p.z + Math.sin(a) * d; if (free(x, z, r + 0.5)) return [x, z]; }
+function aiSpotNear(p, r, minD, maxD, e = null) {
+  for (let k = 0; k < 60; k++) { const a = rand(0, Math.PI * 2), d = rand(minD, maxD), x = p.x + Math.cos(a) * d, z = p.z + Math.sin(a) * d; if (free(x, z, r + 0.5, null, e && [e[0] + 0.5, e[1] + 0.5])) return [x, z]; }
   return null;
 }
 function aiPlace(type, near, vills, n = 2) {
   const d = BUILD[type], h = hdvOf(1); if (!canPay(1, d.cost) || d.age > teams[1].age) return null;
-  const nearH = !near || near === h.pos; const s = aiSpotNear(near || h.pos, d.radius, nearH ? 9 : d.radius + 2.5, nearH ? 24 : d.radius + 8); if (!s) return null;
-  const b = placeBuilding(type, 1, s[0], s[1], Math.floor(rand(0, 4)) * Math.PI / 2);
+  const rot = Math.floor(rand(0, 4)) * Math.PI / 2, nearH = !near || near === h.pos;
+  const s = aiSpotNear(near || h.pos, d.radius, nearH ? 9 : d.radius + 2.5, nearH ? 24 : d.radius + 8, extOf(type, rot)); if (!s) return null;
+  const b = placeBuilding(type, 1, s[0], s[1], rot);
   if (b) vills.filter(v => v.cmd?.type !== 'build').sort((a, c) => d2(a.pos, b.pos) - d2(c.pos, b.pos)).slice(0, n).forEach(v => cmdBuild(v, b));
   return b;
 }
@@ -785,7 +815,7 @@ function startPlacing(type) {
 }
 function stopPlacing() { placing = null; wallStart = null; pending = null; if (ghost) scene.remove(ghost); ghost = null; }
 function rotateGhost() { ghostRot = (ghostRot + Math.PI / 2) % (Math.PI * 2); if (ghost && !BUILD[placing]?.wall) ghost.rotation.y = ghostRot; }
-function validAt(type, x, z) { const d = BUILD[type]; return d.wall ? wallFree(x, z) : free(x, z, d.radius, d.gate ? (o => o.def.wall && o.team === 0) : null); }
+function validAt(type, x, z) { const d = BUILD[type]; return d.wall ? wallFree(x, z) : free(x, z, d.radius, d.gate ? (o => o.def.wall && o.team === 0) : null, extOf(type, ghostRot)); }
 function updateGhost(x, y) { const p = groundAt(x, y); if (p) updateGhostAt(p); }
 function updateGhostAt(p) {
   if (!ghost) return;
@@ -921,6 +951,18 @@ addEventListener('keydown', e => {
   if (k === 'r' && placing) doAct('rotate'); if (k === '.' || k === 'i') doAct('idle');
 });
 addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+const groups = {}; let lastGrp = { n: null, t: 0 };
+addEventListener('keydown', e => {
+  if (!/^Digit[0-9]$/.test(e.code)) return; const n = e.code.slice(5);
+  if (e.ctrlKey || e.metaKey || e.shiftKey) { // Ctrl+n (ou Maj+n si le navigateur garde Ctrl+n) : créer le groupe
+    e.preventDefault(); const sel = selUnits(); if (!sel.length) return; groups[n] = sel.slice(); msg(`Groupe ${n} : ${sel.length} unité(s)`); sfx('ok'); return;
+  }
+  const g = (groups[n] || []).filter(u => !u.dead); groups[n] = g; if (!g.length) return;
+  setSel(g); sfx('select'); updateHUD();
+  const now = performance.now();
+  if (lastGrp.n === n && now - lastGrp.t < 400) { const c = g.reduce((a, u) => a.add(u.pos), new THREE.Vector3()).divideScalar(g.length); camTarget.set(c.x, 0, c.z - camDist * 0.1); updateCam(); }
+  lastGrp = { n, t: now };
+});
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); updateCam(); });
 cv.addEventListener('wheel', e => { e.preventDefault(); camDist += e.deltaY * 0.05; updateCam(); }, { passive: false });
@@ -1012,8 +1054,22 @@ function endGame(win) {
 
 // ================= Boucle =================
 const clock = new THREE.Clock(); let fogT = 0, hudT = 0, miniT = 0;
+function updateDeer(dt) {
+  for (const r of resources) {
+    if (r.sub !== 'cerf' || r.hunted) continue;
+    let mv = 0, dx = 0, dz = 0;
+    let near = null, nd = 6; for (const u of units) { const d = d2(u.pos, r.pos); if (d < nd) { nd = d; near = u; } }
+    if (near) { r.fleeT = 1.5; r.fdir = Math.atan2(r.pos.z - near.pos.z, r.pos.x - near.pos.x) + rand(-0.4, 0.4); }
+    if (r.fleeT > 0) { r.fleeT -= dt; mv = 4.5; dx = Math.cos(r.fdir); dz = Math.sin(r.fdir); }
+    else { r.wT = (r.wT ?? rand(0, 5)) - dt; if (r.wT <= 0) { r.wT = rand(4, 8); r.wdir = rand(0, 6.28); r.wmove = rand(0.5, 1.5); } if (r.wmove > 0) { r.wmove -= dt; mv = 1.2; dx = Math.cos(r.wdir); dz = Math.sin(r.wdir); } }
+    if (!mv) continue;
+    const nx = r.pos.x + dx * mv * dt, nz = r.pos.z + dz * mv * dt, [cx, cz] = toCell({ x: nx, z: nz });
+    if (Math.abs(nx) < HALF - 2 && Math.abs(nz) < HALF - 2 && !gridT[0][cx + cz * N]) { r.pos.x = nx; r.pos.z = nz; r.mesh.rotation.y = Math.atan2(dx, dz); }
+    else { r.fdir = (r.fdir || 0) + Math.PI / 2; r.wdir = (r.wdir || 0) + Math.PI / 2; }
+  }
+}
 function step(dt) {
-  gameTime += dt;
+  gameTime += dt; updateDeer(dt);
   for (const u of [...units]) if (!u.dead) updateUnit(u, dt);
   for (const b of [...buildings]) if (!b.dead) updateBuilding(b, dt);
   aiUpdate(dt);
