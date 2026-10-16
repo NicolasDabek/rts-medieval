@@ -135,8 +135,33 @@ function buildingMesh(type, team) {
   return g;
 }
 
+// ===== Murs instanciés : un InstancedMesh par pièce/type/équipe au lieu de 2 meshes par segment =====
+const WALL_POOL = new Map(), WALL_MAX = 3000, _wm = new THREE.Matrix4(), _ws = new THREE.Matrix4(), _wc = new THREE.Color();
+function wallPool(type, team) {
+  const k = type + team; let p = WALL_POOL.get(k); if (p) return p;
+  const src = buildingMesh(type, team); src.updateMatrixWorld(true); p = { meshes: [], ents: [] };
+  for (const c of src.children) if (c.isMesh) {
+    const im = new THREE.InstancedMesh(c.geometry, c.material, WALL_MAX); im.count = 0; im.castShadow = c.castShadow; im.frustumCulled = false;
+    im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.userData.local = c.matrix.clone(); im.userData.pool = p; scene.add(im); p.meshes.push(im);
+  }
+  WALL_POOL.set(k, p); return p;
+}
+function syncWalls() {
+  for (const p of WALL_POOL.values()) p.ents.length = 0;
+  for (const b of buildings) if (b.def.wall && b.mesh.visible) wallPool(b.type, b.team).ents.push(b);
+  for (const p of WALL_POOL.values()) {
+    const n = Math.min(p.ents.length, WALL_MAX);
+    for (const im of p.meshes) {
+      for (let i = 0; i < n; i++) {
+        const b = p.ents[i]; b.mesh.updateMatrix(); _ws.makeScale(1, b.inner.scale.y, 1);
+        im.setMatrixAt(i, _wm.multiplyMatrices(b.mesh.matrix, _ws).multiply(im.userData.local)); im.setColorAt(i, _wc.setScalar(b.dimmed ? 0.4 : 1));
+      }
+      im.count = n; im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.boundingSphere = null;
+    }
+  }
+}
 function addBuilding(type, team, x, z, done = true, rot = 0, noGrid = false) {
-  const S = BUILD[type], g = new THREE.Group(), inner = buildingMesh(type, team); g.add(inner);
+  const S = BUILD[type], g = new THREE.Group(), inner = S.wall ? new THREE.Object3D() : buildingMesh(type, team); g.add(inner);
   g.position.set(x, 0, z); g.rotation.y = rot; scene.add(g);
   const maxHp = Math.round(S.hp * teams[team].up.bhp);
   const b = { kind: 'building', type, def: S, team, radius: S.radius, ext: extOf(type, rot), mesh: g, inner, pos: g.position, rot, maxHp, hp: done ? maxHp : maxHp * 0.1, done, progress: done ? 1 : 0, queue: [], trainT: 0, cdT: 0 };
@@ -877,7 +902,8 @@ function screenOf(p) { const v = p.clone().setY(0.8).project(camera); return [(v
 function pickEntity(x, y) {
   setRay(x, y);
   const objs = [...units, ...buildings, ...resources].filter(e => e.mesh.visible).map(e => e.mesh);
-  let ent = null; for (const h of ray.intersectObjects(objs, true)) if (h.object.userData.ent) { ent = h.object.userData.ent; break; }
+  for (const p of WALL_POOL.values()) objs.push(...p.meshes);
+  let ent = null; for (const h of ray.intersectObjects(objs, true)) { const pl = h.object.userData.pool; const e = pl ? pl.ents[h.instanceId] : h.object.userData.ent; if (e) { ent = e; break; } }
   if (!ent || ent.kind !== 'unit') {
     let bd = isTouch ? 30 : 16; for (const u of units) if (u.mesh.visible) { const [sx, sy] = screenOf(u.pos), d = Math.hypot(sx - x, sy - y); if (d < bd) { bd = d; ent = u; } }
   }
@@ -1100,11 +1126,11 @@ function loop() {
     e.bar.position.set(e.pos.x, h, e.pos.z); e.bar.quaternion.copy(camera.quaternion);
     fg.scale.x = w * r; fg.position.x = -w * (1 - r) / 2; fg.material.color.setHex(e.done === false ? 0x60a0ff : r > 0.6 ? 0x30e030 : r > 0.3 ? 0xe0c030 : 0xe03030);
   }
-  renderer.render(scene, camera); requestAnimationFrame(loop);
+  syncWalls(); renderer.render(scene, camera); requestAnimationFrame(loop);
 }
 export const game = {
   step, addUnit, addBuilding, addResource, units, buildings, resources, teams, ai, THREE, cmdMove, cmdGather, cmdAttack, cmdBuild, screenOf, camTarget, doAct, setRally, rallyAt, pickEntity, placeWall, placeBuilding, applyTech, train, research, ageUp, kill,
-  explored, rebuildGrid, P0, free, wallFree, setSel, updateFog, updateHUD, msg,
+  renderer, explored, rebuildGrid, P0, free, wallFree, setSel, updateFog, updateHUD, msg,
   get D() { return D; }, set D(v) { D = v; }, get started() { return started; }, set started(v) { started = v; }, get gameTime() { return gameTime; }, set gameTime(v) { gameTime = v; },
   get selBuilding() { return selBuilding; }, set selBuilding(b) { selBuilding = b; }, get camDist() { return camDist; }, get over() { return gameOver; }, endGame,
 };
