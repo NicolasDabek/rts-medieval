@@ -19,7 +19,7 @@ button:disabled{opacity:.4}
 #panel .q{margin-top:4px}
 #extra button{font-size:15px;padding:1px 6px;margin-left:4px;background:transparent;border-color:#8a6a3a}
 #tools button.warn{background:#a04010}
-#tools button[data-n]:not([data-n="0"])::after{content:attr(data-n);position:absolute;font-size:11px;margin:22px 0 0 14px;color:#fff}
+#tools button{position:relative}#tools button[data-n]:not([data-n="0"])::after{content:attr(data-n);position:absolute;top:-6px;right:-6px;font-size:11px;background:#c03020;color:#fff;border-radius:9px;min-width:16px;padding:1px 3px}
 #tools{position:fixed;left:6px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:5}
 #tools button{width:52px;height:52px;font-size:20px;background:rgba(60,40,15,.85)}
 #tools button.on{background:#c9a35a;color:#000}
@@ -40,21 +40,49 @@ button:disabled{opacity:.4}
  #tools button{width:46px;height:46px;font-size:18px}
  #mini{top:auto;bottom:auto;top:calc(52px + env(safe-area-inset-top));right:6px;width:116px;height:116px}
 }
+
+#hud{justify-content:space-between;align-items:center;background:linear-gradient(rgba(30,18,6,.85),rgba(30,18,6,.55))}
+#resbar{display:flex;gap:6px;flex-wrap:wrap}.pill{border:1px solid #8a6a3a;border-radius:14px;padding:3px 10px;background:rgba(40,25,10,.92)}
+#meta{white-space:nowrap}#meta .agep{margin-left:8px}
+#wave{position:fixed;top:46px;left:10px;max-width:70%;background:rgba(140,25,20,.9);color:#fff;border-radius:10px;padding:5px 12px;font-size:14px;z-index:5;display:none;pointer-events:none}
+#tools button{display:flex;flex-direction:column;align-items:center;justify-content:center;height:58px}
+#tools .ti{font-size:20px;line-height:1}#tools .tl{font-size:10px;line-height:1.1;margin-top:3px}
+#panel .acts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+#panel .act{min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;padding:4px;margin:0}
+#panel .act .i{font-size:24px;line-height:1.1}#panel .act.primary{background:#c9a35a;color:#2a1a08}
+#panel .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#panel.sheet{border-top:2px solid #c9a35a;border-radius:14px 14px 0 0;max-height:62vh}
+#panel .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+#panel .card{text-align:left;min-height:62px;padding:8px 10px;margin:0;display:flex;flex-direction:column;justify-content:center}
+#panel .card b{font-size:15px}#panel .card .cost{font-size:12px;opacity:.9;margin-top:3px}
+#panel .card:disabled{opacity:.45}
+#panel .close{background:transparent;border:none;font-size:22px;padding:0 6px}
+@media (pointer:coarse),(max-width:760px){
+ #hud{background:none;padding:8px}#hud .pill{font-size:14px}#meta{font-size:13px;color:#fff;text-shadow:0 0 3px #000}#meta .agep{display:none}
+ #hud{flex-direction:column;align-items:stretch;gap:4px}#resbar{flex-wrap:nowrap;gap:5px}#hud .pill{font-size:13px;padding:3px 8px}#meta{text-align:left}#extra button{font-size:13px}
+ #wave{top:78px;font-size:13px}
+ #msg{top:112px;font-size:15px}
+ #mini{top:calc(78px + env(safe-area-inset-top))}
+ #help{top:calc(78px + 136px)}
+ #help{display:block;bottom:auto;top:calc(52px + 126px);right:6px;left:auto;width:116px;font-size:10px;border-radius:6px}
+ #panel{border-top:2px solid #c9a35a}
+}
 </style>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head><body>
-<div id="hud" class="ui"><span title="Nourriture">🍖 <b id="nourriture">0</b></span><span title="Bois">🪵 <b id="bois">0</b></span><span title="Or">💰 <b id="or">0</b></span><span title="Pierre">🪨 <b id="pierre">0</b></span><span title="Population">👥 <b id="pop">0</b></span><span title="Époque">🏛 <b id="age"></b></span><span>⏱ <b id="time">0:00</b></span><span id="extra"></span></div>
+<div id="hud" class="ui"><div id="resbar"><span class="pill" title="Nourriture">🍖 <b id="nourriture">0</b></span><span class="pill" title="Bois">🪵 <b id="bois">0</b></span><span class="pill" title="Or">💰 <b id="or">0</b></span><span class="pill" title="Pierre">🪨 <b id="pierre">0</b></span></div><div id="meta"><span title="Population">👥 <b id="pop">0</b></span> · <span title="Temps">⏱ <b id="time">0:00</b></span> <span class="agep" title="Époque">🏛 <b id="age"></b></span><span id="extra"></span></div></div>
+<div id="wave"></div>
 <div id="tools">
- <button data-act="box" title="Mode sélection par cadre">▭</button>
- <button data-act="atk" title="Attaque-déplacement (F)">⚔</button>
- <button data-act="army" title="Sélectionner toute l'armée">🛡</button>
- <button data-act="home" title="Centrer sur l'hôtel de ville (H)">🏰</button>
- <button data-act="idle" id="idleBtn" title="Villageois inactif (. ou I)">💤</button>
- <button data-act="desel" title="Tout désélectionner (Échap)">✖</button>
+ <button data-act="box" title="Mode sélection par cadre"><span class="ti">▭</span><span class="tl">Cadre</span></button>
+ <button data-act="atk" title="Attaque-déplacement (F)"><span class="ti">⚔</span><span class="tl">Attaque</span></button>
+ <button data-act="army" title="Sélectionner toute l'armée"><span class="ti">🛡</span><span class="tl">Armée</span></button>
+ <button data-act="home" title="Centrer sur l'hôtel de ville (H)"><span class="ti">🏰</span><span class="tl">Base</span></button>
+ <button data-act="idle" id="idleBtn" title="Villageois inactif (. ou I)"><span class="ti">💤</span><span class="tl">Inactifs</span></button>
+ <button data-act="desel" title="Tout désélectionner (Échap)"><span class="ti">✖</span><span class="tl">Désél.</span></button>
 </div>
 <div id="panel" class="ui"></div><div id="box"></div><div id="msg"></div>
 <canvas id="mini" width="160" height="160"></canvas>
-<div id="help">Clic gauche / glisser : sélection (Maj = ajouter) · Clic droit : déplacer / récolter / attaquer / construire<br>F + clic : attaque-déplacement · R : pivoter · . : villageois inactif · WASD/ZQSD/flèches/bords : caméra · Molette : zoom · H : base · Échap : annuler</div>
+<div id="help" data-touch="Toucher : sélectionner / donner un ordre · Appui long : sélectionner · 1 doigt : déplacer la vue · 2 doigts : zoom">Clic gauche / glisser : sélection (Maj = ajouter) · Clic droit : déplacer / récolter / attaquer / construire<br>F + clic : attaque-déplacement · R : pivoter · . : villageois inactif · WASD/ZQSD/flèches/bords : caméra · Molette : zoom · H : base · Échap : annuler</div>
 <div id="start"><h1>⚔ RTS Médiéval</h1><p>Détruisez l'hôtel de ville ennemi (rouge). Choisissez la difficulté :</p>
 <div class="row"><button data-diff="facile">Facile</button><button data-diff="normal">Normal</button><button data-diff="difficile">Difficile</button></div>
 <p><button id="loadBtn" style="display:none">📂 Reprendre la partie sauvegardée</button></p>

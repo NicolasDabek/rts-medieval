@@ -22,8 +22,8 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = !isTouch;
 document.body.prepend(renderer.domElement);
 const cv = renderer.domElement;
-const scene = new THREE.Scene(); scene.background = new THREE.Color(0x9cc9f0);
-scene.fog = new THREE.Fog(0x9cc9f0, 140, 300);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1e2a16); // plus de ciel bleu visible au bord de la carte
+scene.fog = new THREE.Fog(0x1e2a16, 150, 320);
 const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.5, 600);
 const camTarget = new THREE.Vector3(); let camDist = isTouch ? 50 : 60;
 function updateCam() {
@@ -37,6 +37,7 @@ Object.assign(sun.shadow.camera, { left: -HALF, right: HALF, top: HALF, bottom: 
 scene.add(sun);
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE), new THREE.MeshLambertMaterial({ color: 0x6aa04a }));
 ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+const outer = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), new THREE.MeshBasicMaterial({ color: 0x24341b })); outer.rotation.x = -Math.PI / 2; outer.position.y = -0.05; scene.add(outer);
 
 const matCache = {};
 const mat = c => matCache[c] || (matCache[c] = new THREE.MeshLambertMaterial({ color: c }));
@@ -654,6 +655,7 @@ function updateHUD() {
   const r = teams[0].res; for (const k of RES) $(k).textContent = Math.floor(r[k]);
   $('pop').textContent = popCount(0) + '/' + popCap(0); $('age').textContent = AGES[teams[0].age].name;
   const s = Math.floor(gameTime); $('time').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  const w = $('wave'); if (started && D && !gameOver) { const left = Math.max(0, Math.ceil(ai.nextWave - ai.t)); w.style.display = left < 600 ? 'block' : 'none'; w.textContent = `⚔ Vague ennemie dans ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; } else w.style.display = 'none';
   const idle = units.filter(u => u.team === 0 && u.def.cls === 'villager' && !u.cmd).length; const ib = $('idleBtn'); if (ib) { ib.dataset.n = idle; ib.classList.toggle('warn', idle > 0); }
   renderPanel();
 }
@@ -668,10 +670,39 @@ function canBuild(type) {
   if (d.req && !buildings.some(b => b.team === 0 && b.type === d.req && b.done)) return '🔒 ' + BUILD[d.req].label;
   if (!canPay(0, d.cost)) return 'Ressources insuffisantes'; return null;
 }
-let panelHTML = '';
+let panelHTML = '', buildSheet = false, pending = null;
+const MOBILE = isTouch || innerWidth < 760;
+function costLine(type) { const d = BUILD[type]; return costTxt(d.cost).replace(/(\d+)(\S+)/g, '$2 $1') + (d.wall ? ' /m' : '') + (d.pop ? ` · +${d.pop} pop.` : ''); }
+function lockTxt(r) { return r.startsWith('🔒 Âge') ? 'Requiert l\'' + r.slice(2) : r.startsWith('🔒') ? 'Requiert ' + r.slice(2).toLowerCase() : r; }
+function mobilePanel(sel) {
+  const act = (a, icon, label, primary = false, dis = false) => `<button class="act${primary ? ' primary' : ''}" data-act="${a}" ${dis ? 'disabled' : ''}><span class="i">${icon}</span>${label}</button>`;
+  if (placing) {
+    const d = BUILD[placing], ready = d.wall ? !!(wallStart && pending) : !!pending;
+    const hint = d.wall ? (!wallStart ? 'Touchez le point de départ du mur' : !pending ? 'Touchez le point d\'arrivée' : 'Vérifiez le tracé puis ✔') : (pending ? (validAt(placing, pending.x, pending.z) ? 'Emplacement valide : ✔ pour confirmer' : 'Emplacement invalide, touchez ailleurs') : 'Touchez la carte pour placer');
+    return `<div class="row"><b>${d.icon} ${d.label}</b><span>${costLine(placing)}</span></div><div class="acts">${act('confirm', '✔', 'Placer', true, !ready)}${d.wall ? act('wallreset', '↺', 'Recommencer', false, !wallStart) : act('rotate', '↻', 'Pivoter')}${act('sheet', '🏠', 'Autre')}${act('desel', '✖', 'Annuler')}</div><div style="font-size:13px;margin-top:6px">${hint}</div>`;
+  }
+  if (buildSheet) {
+    const cards = Object.keys(BUILD).filter(k => !(BUILD[k].age > teams[0].age + 1)).map(k => {
+      const d = BUILD[k], r = canBuild(k), locked = r && r.startsWith('🔒');
+      return `<button class="card" data-act="place:${k}" ${r ? 'disabled' : ''}><b>${locked ? '🔒' : d.icon} ${d.label}</b><span class="cost">${locked ? lockTxt(r) : costLine(k)}</span></button>`;
+    }).join('');
+    return `<div class="row"><b style="font-size:17px">Construire</b><button class="close" data-act="sheetclose">✕</button></div><div class="grid">${cards}</div><p style="font-size:13px;margin:10px 0 0">Touchez la carte pour placer, puis ✔ pour confirmer.</p>`;
+  }
+  if (!sel.length) return null;
+  const vills = sel.filter(u => u.def.cls === 'villager'), c = {}; sel.forEach(u => c[u.type] = (c[u.type] || 0) + 1);
+  const title = Object.entries(c).map(([t, n]) => `${n} ${UNIT[t].label.toLowerCase()}${n > 1 && !t.endsWith('s') ? 's' : ''}`).join(', ') + (sel.length > 1 ? ' sélectionnés' : ' sélectionné');
+  const g = {}; vills.forEach(u => { const t = u.cmd?.type === 'gather' && u.cmd.res ? resTypeOf(u.cmd.res) : u.cmd?.type === 'build' ? 'construction' : null; if (t) g[t] = (g[t] || 0) + 1; });
+  const job = Object.entries(g).sort((a, b) => b[1] - a[1])[0];
+  const right = job ? (job[0] === 'construction' ? 'Construction' : 'Récolte : ' + RES_LABEL[job[0]].toLowerCase()) : sel.length === 1 ? `PV ${Math.ceil(sel[0].hp)}/${sel[0].maxHp}` : '';
+  const acts = vills.length ? act('gatherauto', '🪓', 'Récolter', true) + act('sheet', '🏠', 'Construire') + act('atk', '⚔', 'Attaquer') + act('desel', '✖', 'Annuler')
+    : act('atk', '⚔', 'Attaquer', true) + act('stop', '⏹', 'Arrêter') + act('army', '🛡', 'Armée') + act('desel', '✖', 'Annuler');
+  return `<div class="row"><b>${title}</b><span>${right}</span></div><div class="acts">${acts}</div>`;
+}
 function renderPanel() {
   let h = ''; const sel = selUnits();
-  if (placing) {
+  const mp = MOBILE ? mobilePanel(sel) : null; $('panel').classList.toggle('sheet', MOBILE && buildSheet && !placing);
+  if (mp !== null) h = mp;
+  else if (placing) {
     const d = BUILD[placing];
     h = `<div class="hd">${d.icon} <b>${d.label}</b> — ${d.wall ? (wallStart ? 'choisissez le point final' : (isTouch ? 'touchez le point de départ puis le point final' : 'cliquez-glissez (ou 2 clics) pour tracer le mur')) : (isTouch ? 'touchez le sol pour placer' : 'clic gauche pour placer (Maj = plusieurs)')}</div>`
       + (d.wall ? '' : bt('rotate', '↻', 'Pivoter' + (isTouch ? '' : ' (R)'), '', null)) + bt('desel', '✖', 'Annuler', '', null);
@@ -706,7 +737,7 @@ function doAct(a) {
   if (k === 'train' && selBuilding) { const r = canTrain(selBuilding, v); if (r) { msg(r); sfx('error'); } else { train(selBuilding, v); sfx('click'); } }
   else if (k === 'tech' && selBuilding) { const r = canTech(selBuilding, v); if (r) { msg(r); sfx('error'); } else { research(selBuilding, v); sfx('click'); } }
   else if (k === 'age' && selBuilding) { const r = canAge(selBuilding); if (r) { msg(r); sfx('error'); } else { ageUp(selBuilding); sfx('click'); } }
-  else if (k === 'place') { const r = canBuild(v); if (r) { msg(r); sfx('error'); } else startPlacing(v); }
+  else if (k === 'place') { const r = canBuild(v); if (r) { msg(r); sfx('error'); } else { buildSheet = false; startPlacing(v); } }
   else if (k === 'rotate') rotateGhost();
   else if (k === 'only') setSel(selUnits().filter(u => u.type === v));
   else if (k === 'stop') selUnits().forEach(u => { u.cmd = null; u.target = null; u.path = []; })
@@ -718,7 +749,12 @@ function doAct(a) {
   else if (k === 'army') setSel(units.filter(u => u.team === 0 && u.def.cls !== 'villager'));
   else if (k === 'home') { const h = hdvOf(0); if (h) { camTarget.copy(h.pos); updateCam(); } }
   else if (k === 'idle') selectIdle();
-  else if (k === 'desel') { setSel([]); stopPlacing(); atkMode = false; rallyMode = false; }
+  else if (k === 'sheet') { stopPlacing(); buildSheet = true; }
+  else if (k === 'sheetclose') buildSheet = false;
+  else if (k === 'confirm') confirmPlace();
+  else if (k === 'wallreset') { wallStart = null; pending = null; if (ghost) { ghost.scale.x = 1; } }
+  else if (k === 'gatherauto') gatherAuto();
+  else if (k === 'desel') { setSel([]); stopPlacing(); atkMode = false; rallyMode = false; buildSheet = false; }
   else if (extraActs[k]) extraActs[k](v);
   document.querySelectorAll('#tools button').forEach(b => b.classList.toggle('on', (b.dataset.act === 'box' && boxMode) || (b.dataset.act === 'atk' && atkMode)));
   updateHUD();
@@ -742,11 +778,12 @@ function startPlacing(type) {
   else { ghost = buildingMesh(type, 0); ghost.traverse(o => { if (o.isMesh) { o.material = ghostMat; o.castShadow = false; } }); ghost.rotation.y = ghostRot; }
   ghost.position.set(camTarget.x, 0, camTarget.z); scene.add(ghost); sfx('click');
 }
-function stopPlacing() { placing = null; wallStart = null; if (ghost) scene.remove(ghost); ghost = null; }
+function stopPlacing() { placing = null; wallStart = null; pending = null; if (ghost) scene.remove(ghost); ghost = null; }
 function rotateGhost() { ghostRot = (ghostRot + Math.PI / 2) % (Math.PI * 2); if (ghost && !BUILD[placing]?.wall) ghost.rotation.y = ghostRot; }
 function validAt(type, x, z) { const d = BUILD[type]; return d.wall ? wallFree(x, z) : free(x, z, d.radius, d.gate ? (o => o.def.wall && o.team === 0) : null); }
-function updateGhost(x, y) {
-  if (!ghost) return; const p = groundAt(x, y); if (!p) return;
+function updateGhost(x, y) { const p = groundAt(x, y); if (p) updateGhostAt(p); }
+function updateGhostAt(p) {
+  if (!ghost) return;
   if (BUILD[placing].wall && wallStart) {
     const len = Math.max(1, d2(wallStart, p)); ghost.scale.x = len; ghost.position.set((wallStart.x + p.x) / 2, 0, (wallStart.z + p.z) / 2); ghost.position.y = 1.1;
     ghost.rotation.y = -Math.atan2(p.z - wallStart.z, p.x - wallStart.x); ghostMat.color.set(canPay(0, BUILD[placing].cost) ? 0x00ff00 : 0xff0000);
@@ -756,8 +793,29 @@ function assignBuilders(list) {
   const v = selUnits().filter(u => u.def.cls === 'villager'); if (!list.length) return;
   v.forEach(u => cmdBuild(u, list.slice().sort((a, b) => d2(a.pos, u.pos) - d2(b.pos, u.pos))[0]));
 }
+function confirmPlace() {
+  if (!placing || !pending) return; const d = BUILD[placing];
+  if (d.wall) { if (wallStart) finishWall(pending); return; }
+  const b = placeBuilding(placing, 0, pending.x, pending.z, ghostRot);
+  if (!b) { msg('Emplacement invalide ou ressources insuffisantes'); sfx('error'); return; }
+  assignBuilders([b]); sfx('place'); stopPlacing();
+}
+function gatherAuto() {
+  const v = selUnits().filter(u => u.def.cls === 'villager'); if (!v.length) return;
+  const c = v.reduce((a, u) => a.add(u.pos), new THREE.Vector3()).divideScalar(v.length);
+  const low = RES.slice().sort((a, b) => teams[0].res[a] - teams[0].res[b]);
+  let r = null; for (const t of low) { r = resources.filter(o => o.type === t && isExp(o.pos) && d2(o.pos, c) < 30).sort((a, b) => d2(a.pos, c) - d2(b.pos, c))[0]; if (r) break; }
+  r = r || resources.filter(o => isExp(o.pos)).sort((a, b) => d2(a.pos, c) - d2(b.pos, c))[0];
+  if (!r) return msg('Aucune ressource connue à proximité');
+  v.forEach(u => cmdGather(u, r)); msg('Récolte : ' + RES_LABEL[r.type]); sfx('ok');
+}
 function tryPlace(x, y, keep = false) {
   const p = groundAt(x, y); if (!p) return; const d = BUILD[placing];
+  if (MOBILE && isTouch) { // mobile : on choisit puis on confirme
+    if (d.wall && !wallStart) { wallStart = p.clone(); pending = null; ghost.position.set(p.x, 1.1, p.z); }
+    else { pending = p.clone(); updateGhostAt(p); }
+    sfx('click'); return doAct('noop');
+  }
   if (d.wall) {
     if (!wallStart) { wallStart = p.clone(); msg('Choisissez le point final du mur'); updateGhost(x, y); return; }
     return finishWall(p);
@@ -897,7 +955,7 @@ cv.addEventListener('pointerdown', e => {
 cv.addEventListener('pointermove', e => {
   if (e.pointerType === 'mouse') { mouse.x = e.clientX; mouse.y = e.clientY; mouse.in = true; }
   if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  if (placing && (e.pointerType === 'mouse' || wallStart)) updateGhost(e.clientX, e.clientY);
+  if (placing && e.pointerType === 'mouse') updateGhost(e.clientX, e.clientY);
   if (!gest || !ptrs.has(e.pointerId)) return;
   const moved = Math.hypot(e.clientX - gest.sx, e.clientY - gest.sy);
   if (gest.type === 'mpending' && moved > 5) gest.type = 'box';
@@ -987,6 +1045,7 @@ export const game = {
 };
 window.__game = game;
 export function boot(skipMap = false) {
+  if (isTouch) { const hp = $('help'); hp.textContent = hp.dataset.touch; }
   if (!skipMap) generateMap();
   camTarget.copy(hdvOf(0)?.pos || P0); updateCam(); updateFog(); updateHUD(); loop();
   if (!started) $('start').style.display = 'flex';
