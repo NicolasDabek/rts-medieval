@@ -16,6 +16,8 @@ extraActs.save = () => {
 };
 extraActs.load = () => { if (!saved()) return game.msg('Aucune sauvegarde'); location.href = location.pathname + '?load=1'; };
 
+// sauvegarde automatique toutes les 60 s de partie active
+setInterval(() => { if (game.started && !game.over && !document.hidden) { try { localStorage.setItem(KEY, serialize(game)); } catch (e) { } } }, 60000);
 let loaded = false;
 if (new URLSearchParams(location.search).has('load') && saved()) {
   try { loadInto(game, JSON.parse(saved())); loaded = true; } catch (e) { console.warn('Sauvegarde illisible', e); }

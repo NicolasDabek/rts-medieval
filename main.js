@@ -87,8 +87,8 @@ const RES_DEF = {
   bois: { type: 'bois', amount: 100, radius: 0.9 }, or: { type: 'or', amount: 450, radius: 1.6 }, pierre: { type: 'pierre', amount: 400, radius: 1.6 },
   baies: { type: 'nourriture', amount: 150, radius: 1, rate: 0.55 }, cerf: { type: 'nourriture', amount: 140, radius: 0.8, rate: 0.4 },
 };
-function addResource(sub, x, z, amount) {
-  const R = RES_DEF[sub]; if (!free(x, z, R.radius)) return;
+function addResource(sub, x, z, amount, force = false) {
+  const R = RES_DEF[sub]; if (!force && !free(x, z, R.radius)) return;
   const g = new THREE.Group();
   if (sub === 'bois') { addPart(g, Cy(0.25, 0.3, 1.5, 6), 0x6b4423, 0, 0.75); addPart(g, Co(1.2, 3, 7), 0x2f6b2a, 0, 2.8); g.rotation.y = rand(0, 6); }
   else if (sub === 'baies') { addPart(g, Sp(0.9), 0x3f7f2a, 0, 0.6); for (let i = 0; i < 5; i++) addPart(g, Sp(0.15), 0xc0203a, Math.cos(i * 1.3) * 0.75, 0.6 + Math.sin(i * 2.1) * 0.4, Math.sin(i * 1.3) * 0.75); }
@@ -913,12 +913,16 @@ function clickSelect(x, y, add) {
   } else if (ent?.kind === 'building') { setSel([]); selBuilding = ent; sfx('select'); }
   else if (!add) setSel([]);
 }
+function rallyAt(b, pos, res = null) {
+  b.rally = { pos, res };
+  if (b.team !== 0) return;
+  if (!b.flag) { b.flag = new THREE.Group(); b.flag.add(mk(Cy(0.05, 0.05, 2), 0x333333, 1)); b.flag.add(mk(Bx(0.8, 0.5, 0.05), TEAM_COLOR[0], 1.7).translateX(0.4)); scene.add(b.flag); }
+  b.flag.position.set(pos.x, 0, pos.z);
+}
 function setRally(x, y) {
   const b = selBuilding; rallyMode = false; if (!b || b.team !== 0) return;
   const { ent, point } = pickEntity(x, y), res = ent?.kind === 'resource' || (ent?.def?.farm && ent.team === 0) ? ent : null, pos = res ? res.pos.clone() : point;
-  b.rally = { pos, res };
-  if (!b.flag) { b.flag = new THREE.Group(); b.flag.add(mk(Cy(0.05, 0.05, 2), 0x333333, 1)); b.flag.add(mk(Bx(0.8, 0.5, 0.05), TEAM_COLOR[0], 1.7).translateX(0.4)); scene.add(b.flag); }
-  b.flag.position.set(pos.x, 0, pos.z); marker(pos, 0x4080ff); msg('Point de ralliement défini' + (res ? ' (récolte)' : '')); sfx('ok');
+  rallyAt(b, pos, res); marker(pos, 0x4080ff); msg('Point de ralliement défini' + (res ? ' (récolte)' : '')); sfx('ok');
 }
 function tap(x, y) {
   if (placing) return tryPlace(x, y);
@@ -1099,7 +1103,7 @@ function loop() {
   renderer.render(scene, camera); requestAnimationFrame(loop);
 }
 export const game = {
-  step, addUnit, addBuilding, addResource, units, buildings, resources, teams, ai, THREE, cmdMove, cmdGather, cmdAttack, cmdBuild, screenOf, camTarget, doAct, setRally, pickEntity, placeWall, placeBuilding, applyTech, train, research, ageUp, kill,
+  step, addUnit, addBuilding, addResource, units, buildings, resources, teams, ai, THREE, cmdMove, cmdGather, cmdAttack, cmdBuild, screenOf, camTarget, doAct, setRally, rallyAt, pickEntity, placeWall, placeBuilding, applyTech, train, research, ageUp, kill,
   explored, rebuildGrid, P0, free, wallFree, setSel, updateFog, updateHUD, msg,
   get D() { return D; }, set D(v) { D = v; }, get started() { return started; }, set started(v) { started = v; }, get gameTime() { return gameTime; }, set gameTime(v) { gameTime = v; },
   get selBuilding() { return selBuilding; }, set selBuilding(b) { selBuilding = b; }, get camDist() { return camDist; }, get over() { return gameOver; }, endGame,
