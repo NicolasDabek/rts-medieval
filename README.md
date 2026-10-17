@@ -16,3 +16,10 @@ Jouer : https://nicolasdabek.github.io/rts-medieval/ — en local : `python3 -m 
 
 HUD : 🔊 son, 💾 sauvegarder, 📂 charger (localStorage).
 Debug : `?diff=normal`, `?speed=10`, `?nofog`.
+
+## Structure du code (modules ES)
+- `app.js` entrée · `main.js` boucle + API `window.__game` · `state.js` état mutable partagé
+- `config.js` paramètres/équipes · `data.js` statistiques · `render.js` scène/caméra
+- `world.js` entités + murs instanciés · `path.js` A* · `map.js` carte + brouillard
+- `units.js` économie/commandes/combat · `ai.js` IA · `ui.js` panneaux/HUD/minimap · `input.js` souris/tactile/clavier
+- `save.js` sauvegarde · `audio.js` sons
