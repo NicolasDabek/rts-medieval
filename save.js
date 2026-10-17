@@ -12,7 +12,7 @@ export function serialize(g) {
     v: 2, date: Date.now(), time: g.gameTime, D: Object.keys(DIFFS).find(k => DIFFS[k] === g.D) || 'normal', ai: { ...g.ai },
     teams: g.teams.map(t => ({ res: t.res, age: t.age, techs: [...t.techs] })),
     res: g.resources.map(r => [r.sub, r1(r.pos.x), r1(r.pos.z), r.amount, r.hunted ? 1 : 0]),
-    buildings: g.buildings.map(b => ({ t: b.type, tm: b.team, x: r1(b.pos.x), z: r1(b.pos.z), r: b.rot, hp: b.hp, mh: b.maxHp, d: b.done, p: b.progress, a: b.amount, q: b.queue, tt: b.trainT, s: b.seen, ra: b.rally ? [r1(b.rally.pos.x), r1(b.rally.pos.z), refOf(g, b.rally.res)] : null })),
+    buildings: g.buildings.map(b => ({ t: b.type, tm: b.team, x: r1(b.pos.x), z: r1(b.pos.z), r: b.rot, hp: b.hp, mh: b.maxHp, d: b.done, p: b.progress, a: b.amount, q: b.queue, tt: b.trainT, s: b.seen, wt: b.wonderT, ra: b.rally ? [r1(b.rally.pos.x), r1(b.rally.pos.z), refOf(g, b.rally.res)] : null })),
     units: g.units.map(u => [u.type, u.team, r1(u.pos.x), r1(u.pos.z), u.hp, u.carry, u.carryType, cmdOf(g, u)]),
     exp,
   });
@@ -22,7 +22,7 @@ export function loadInto(g, s) {
   for (const [sub, x, z, a] of s.res) g.addResource(sub, x, z, a, true);
   for (const o of s.buildings) {
     const b = g.addBuilding(o.t, o.tm, o.x, o.z, o.d, o.r, true);
-    Object.assign(b, { hp: o.hp, maxHp: o.mh, progress: o.p, queue: o.q || [], trainT: o.tt || 0, seen: o.s });
+    Object.assign(b, { hp: o.hp, maxHp: o.mh, progress: o.p, queue: o.q || [], trainT: o.tt || 0, seen: o.s }); if (o.wt !== undefined && o.wt !== null) b.wonderT = o.wt;
     if (o.a !== undefined && o.a !== null) b.amount = o.a; b.inner.scale.y = 0.1 + 0.9 * o.p;
   }
   for (const [t, tm, x, z, hp, c, ct] of s.units) { const u = g.addUnit(t, tm, x, z); u.hp = hp; u.carry = c || 0; u.carryType = ct || null; }

@@ -1,0 +1,9 @@
+{
+  "name": "rts-medieval",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "duel": "node tools/duel.mjs",
+    "test": "node test/duel.test.mjs"
+  }
+}

@@ -14,12 +14,13 @@ export const AGES = [
 export const UNIT = {
   villageois: { label: 'Villageois', icon: '👷', cls: 'villager', hp: 25, atk: 3, range: 1.2, cd: 1.5, speed: 5.5, am: 0, ap: 0, cost: { nourriture: 50 }, time: 7, aggro: 0, b: 'hdv', age: 0 },
   epeiste: { label: 'Épéiste', icon: '🗡️', cls: 'inf', hp: 60, atk: 7, range: 1.3, cd: 1, speed: 5, am: 1, ap: 1, cost: { nourriture: 60, or: 20 }, time: 9, aggro: 11, b: 'caserne', age: 0, bonus: { building: 4, inf: 2 }, desc: 'Infanterie polyvalente, bonne contre les bâtiments' },
-  lancier: { label: 'Lancier', icon: '🔱', cls: 'inf', hp: 50, atk: 4, range: 1.6, cd: 1, speed: 5.2, am: 0, ap: 0, cost: { nourriture: 35, bois: 25 }, time: 7, aggro: 11, b: 'caserne', age: 1, bonus: { cav: 10, hero: 6 }, desc: 'Anti-cavalerie' },
-  archer: { label: 'Archer', icon: '🏹', cls: 'arch', hp: 40, atk: 5, range: 10, cd: 1.4, speed: 5.8, am: 0, ap: 0, cost: { bois: 25, or: 40 }, time: 8, aggro: 12, b: 'archerie', age: 1, bonus: { inf: 3 }, kite: true, proj: 'arrow', desc: "Tir à distance, efficace contre l'infanterie (inefficace contre les bâtiments)" },
+  lancier: { label: 'Lancier', icon: '🔱', cls: 'inf', hp: 50, atk: 4, range: 1.6, cd: 1, speed: 5.2, am: 0, ap: 0, cost: { nourriture: 35, bois: 25 }, time: 7, aggro: 11, b: 'caserne', age: 1, bonus: { cav: 10, hero: 8 }, desc: 'Anti-cavalerie' },
+  archer: { label: 'Archer', icon: '🏹', cls: 'arch', hp: 40, atk: 5, range: 10, cd: 1.6, speed: 5.8, am: 0, ap: 0, cost: { bois: 25, or: 40 }, time: 8, aggro: 12, b: 'archerie', age: 1, bonus: { inf: 3 }, kite: true, proj: 'arrow', desc: "Tir à distance, efficace contre l'infanterie (inefficace contre les bâtiments)" },
+  tirailleur: { label: 'Tirailleur', icon: '🎯', cls: 'inf', hp: 50, atk: 4, range: 5, cd: 1.5, speed: 5.4, am: 0, ap: 4, cost: { nourriture: 35, bois: 30 }, time: 8, aggro: 11, b: 'caserne', age: 1, bonus: { arch: 5 }, proj: 'arrow', desc: 'Javelots, bouclier : anti-archers, résiste aux flèches' },
   cavalier: { label: 'Cavalier', icon: '🐎', cls: 'cav', hp: 110, atk: 9, range: 1.5, cd: 1.2, speed: 8, am: 2, ap: 2, cost: { nourriture: 70, or: 60 }, time: 11, aggro: 13, b: 'ecurie', age: 1, bonus: { arch: 7, siege: 10 }, radius: 0.75, desc: 'Rapide, écrase archers et engins de siège' },
   belier: { label: 'Bélier', icon: '🐏', cls: 'siege', hp: 180, atk: 2, range: 2, cd: 2.5, speed: 3.2, am: 0, ap: 25, cost: { bois: 160, or: 75 }, time: 16, aggro: 14, siegeOnly: true, b: 'atelier', age: 2, bonus: { building: 60 }, radius: 0.95, desc: 'Détruit les bâtiments, insensible aux flèches' },
   catapulte: { label: 'Catapulte', icon: '☄️', cls: 'siege', hp: 80, atk: 14, range: 15, cd: 3.2, speed: 3, am: 0, ap: 4, cost: { bois: 200, or: 150 }, time: 18, aggro: 16, b: 'atelier', age: 2, bonus: { building: 45 }, proj: 'stone', splash: 2.2, radius: 0.95, desc: 'Longue portée, dégâts de zone' },
-  heros: { label: 'Héros (Roland)', icon: '👑', cls: 'hero', hp: 450, atk: 16, range: 1.6, cd: 1, speed: 6.5, am: 4, ap: 4, cost: { nourriture: 200, or: 200 }, time: 20, aggro: 13, b: 'hdv', age: 2, limit: 1, regen: 0.8, desc: 'Unique, se soigne hors combat' },
+  heros: { label: 'Héros (Roland)', icon: '👑', cls: 'hero', hp: 450, atk: 16, range: 1.6, cd: 1, speed: 6.5, am: 3, ap: 4, cost: { nourriture: 200, or: 200 }, time: 20, aggro: 13, b: 'hdv', age: 2, limit: 1, regen: 0.8, desc: 'Unique, se soigne hors combat' },
 };
 
 export const BUILD = {
@@ -37,6 +38,7 @@ export const BUILD = {
   tour: { label: 'Tour de guet', icon: '🗼', hp: 700, radius: 1.6, cost: { bois: 50, pierre: 100 }, time: 18, age: 1, atk: 6, range: 11, cd: 2, bar: 9.5, proj: 'arrow' },
   muraille: { label: 'Muraille', icon: '🧱', hp: 1000, radius: 0.6, cost: { pierre: 8 }, time: 4, age: 1, wall: true, bar: 3.6 },
   porte: { label: 'Porte', icon: '🚪', hp: 1200, radius: 1.7, cost: { pierre: 30 }, time: 12, age: 1, gate: true, bar: 4.8 },
+  merveille: { label: 'Merveille', icon: '🏛️', hp: 4000, radius: 4.6, cost: { nourriture: 1000, bois: 1000, or: 1000, pierre: 1000 }, fp: [8.5, 8.5], time: 300, age: 3, bar: 9, limit: 1, wonder: 300, desc: 'Victoire si elle reste debout 5 min après sa construction' },
   universite: { label: 'Université', icon: '📜', hp: 1000, radius: 3.3, cost: { bois: 200 }, fp: [6, 5.4], time: 25, age: 2, bar: 6 },
   atelier: { label: 'Atelier de siège', icon: '🛠️', hp: 900, radius: 3.3, cost: { bois: 200 }, fp: [6.2, 4.7], time: 25, age: 2, bar: 5 },
 };

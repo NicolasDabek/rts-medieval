@@ -77,6 +77,7 @@ export function buildingMesh(type, team) {
     case 'ecurie': P(Bx(7, 2, 4), 0x8a6038, 0, 1); P(Bx(7.4, 0.5, 4.4), tc, 0, 2.25); P(Bx(7, 0.5, 0.1), 0x6b4423, 0, 0.6, 2.6); break;
     case 'forge': P(Bx(4.5, 2.4, 4), 0x6a5a4a, 0, 1.2); P(Co(3.4, 1.4), tc, 0, 3.1); P(Cy(0.4, 0.5, 3, 6), 0x333333, 1.4, 3, 1.2); P(Bx(0.8, 0.6, 0.5), 0x222222, -2.6, 0.6, 0); break;
     case 'tour': P(Cy(1.1, 1.4, 7, 8), 0x9a9a9a, 0, 3.5); P(Cy(1.5, 1.5, 0.6, 8), 0x888888, 0, 7.2); P(Co(1.6, 1.8, 8), tc, 0, 8.4); break;
+    case 'merveille': P(Bx(8.5, 1.2, 8.5), 0xd8d0b8, 0, 0.6); P(Bx(6.5, 1.6, 6.5), 0xe8e0c8, 0, 2); P(Bx(4.5, 2, 4.5), 0xf0e8d0, 0, 3.8); for (const [x, z] of [[-3.6, -3.6], [3.6, -3.6], [-3.6, 3.6], [3.6, 3.6]]) P(Cy(0.35, 0.35, 4, 8), 0xffffff, x, 3.2, z); P(Co(2.2, 2.5, 4), tc, 0, 6); P(Sp(0.7), 0xffd700, 0, 7.6); break;
     case 'universite': P(Bx(6, 3, 5), 0xe8e0d0, 0, 1.5); P(Sp(1.8), tc, 0, 3.2); for (const x of [-2.2, -0.7, 0.7, 2.2]) P(Cy(0.2, 0.2, 3, 6), 0xffffff, x, 1.5, 2.7); break;
     case 'atelier': P(Bx(6, 2.6, 4.5), 0x7a6a50, 0, 1.3); P(Bx(6.4, 0.5, 4.9), tc, 0, 2.85); P(Cy(0.8, 0.8, 0.25, 10), 0x4a3020, 3.2, 0.8, 0).rotation.z = Math.PI / 2; break;
     case 'palissade': P(Bx(1.15, 2.2, 0.45), 0x8a6038, 0, 1.1); P(Bx(0.15, 0.3, 0.5), tc, 0, 2.3); break;
@@ -142,6 +143,7 @@ export function unitMesh(type, team) {
     default: human();
       if (type === 'epeiste') { P(Bx(0.08, 0.9, 0.12), 0xdddddd, 0.45, 0.9); P(Bx(0.08, 0.6, 0.5), 0x7a5030, -0.45, 0.7); P(Co(0.32, 0.4, 8), 0x999999, 0, 1.62); }
       if (type === 'lancier') { P(Bx(0.06, 2.4, 0.06), 0x8b6b3a, 0.45, 1.2); P(Co(0.08, 0.35, 4), 0xcccccc, 0.45, 2.55); P(Co(0.32, 0.3, 8), 0x888888, 0, 1.6); }
+      if (type === 'tirailleur') { P(Bx(0.05, 1.6, 0.05), 0x8b6b3a, 0.45, 1.1); P(Cy(0.38, 0.38, 0.08, 10), 0x7a5030, -0.45, 0.8).rotation.z = Math.PI / 2; }
       if (type === 'archer') { const bow = mk(G.bow, 0x6b4423, 0.9); bow.rotation.z = -Math.PI / 2; bow.position.x = 0.45; body.add(bow); }
   }
   return { g, body };

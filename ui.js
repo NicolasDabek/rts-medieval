@@ -25,7 +25,10 @@ export function updateHUD() {
     el.textContent = v; pill.setAttribute('aria-label', `${RES_LABEL[k]} : ${v}`); }
   $('pop').textContent = popCount(0) + '/' + popCap(0); $('age').textContent = AGES[teams[0].age].name;
   const s = Math.floor(st.gameTime); $('time').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-  const w = $('wave'); if (st.started && st.D && !gameOver) { const left = Math.max(0, Math.ceil(ai.nextWave - ai.t)); w.style.display = left < 600 ? 'block' : 'none'; w.textContent = `⚔ Vague ennemie dans ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; } else w.style.display = 'none';
+  const w = $('wave'); if (st.started && st.D && !gameOver) { const left = Math.max(0, Math.ceil(ai.nextWave - ai.t)); w.style.display = left < 600 ? 'block' : 'none'; w.textContent = `⚔ Vague ennemie dans ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+    const wd = buildings.filter(b => b.def.wonder && b.done).sort((a, c) => a.wonderT - c.wonderT)[0];
+    if (wd) { const s = Math.max(0, Math.ceil(wd.wonderT)), mm = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; w.style.display = 'block'; w.textContent = wd.team === 0 ? `🏛️ Votre merveille : victoire dans ${mm}` : `🏛️ Merveille ennemie : défaite dans ${mm} — détruisez-la !`; }
+  } else w.style.display = 'none';
   const idle = units.filter(u => u.team === 0 && u.def.cls === 'villager' && !u.cmd).length; const ib = $('idleBtn'); if (ib) { ib.dataset.n = idle; ib.classList.toggle('warn', idle > 0); ib.setAttribute('aria-label', `Villageois inactifs : ${idle}`); }
   if (st.started && !gameOver) {
     if (ai.waveN > ann.wave) { ann.wave = ai.waveN; announce(`Alerte : la vague ennemie ${ai.waveN} attaque !`); }
@@ -45,6 +48,7 @@ export function bt(act, icon, label, sub, reason, desc = '') {
 export function canBuild(type) {
   const d = BUILD[type], T = teams[0];
   if (d.age > T.age) return ageLock(d.age);
+  if (d.limit && buildings.some(b => b.team === 0 && b.type === type)) return '🔒 Une seule ' + d.label.toLowerCase();
   if (d.req && !buildings.some(b => b.team === 0 && b.type === d.req && b.done)) return '🔒 ' + BUILD[d.req].label;
   if (!canPay(0, d.cost)) return 'Ressources insuffisantes'; return null;
 }
@@ -239,9 +243,9 @@ mini.addEventListener('pointerup', () => miniDrag = false);
 mini.addEventListener('contextmenu', e => e.preventDefault());
 
 // ================= Fin de partie =================
-export function endGame(win) {
+export function endGame(win, why = 'hdv') {
   if (gameOver) return; gameOver = true; sfx(win ? 'age' : 'horn');
   $('endTitle').textContent = win ? '🏆 Victoire !' : '💀 Défaite…';
-  $('endSub').textContent = win ? "L'hôtel de ville ennemi est détruit." : 'Votre hôtel de ville a été détruit.';
+  $('endSub').textContent = why === 'merveille' ? (win ? 'Votre merveille a tenu 5 minutes.' : 'La merveille ennemie a tenu 5 minutes.') : win ? "L'hôtel de ville ennemi est détruit." : 'Votre hôtel de ville a été détruit.';
   $('end').style.display = 'flex';
 }

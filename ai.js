@@ -27,9 +27,13 @@ export function aiDefend(src) {
 export const playerCls = c => units.filter(u => u.team === 0 && u.def.cls === c).length;
 export function aiPickUnit(b) {
   const opts = Object.keys(UNIT).filter(k => UNIT[k].b === b.type && k !== 'villageois' && k !== 'heros' && !canTrain(b, k)); if (!opts.length) return null;
-  const COUNTER = { cav: 'lancier', inf: 'archer', arch: 'cavalier', siege: 'cavalier' };
-  const major = ['cav', 'inf', 'arch', 'siege'].map(c => [c, playerCls(c)]).sort((a, b) => b[1] - a[1])[0];
-  if (major[1] >= 3 && opts.includes(COUNTER[major[0]]) && Math.random() < 0.7) return COUNTER[major[0]];
+  // réponse proportionnelle : la part de chaque classe dans l'armée du joueur = la part des formations IA dédiées à son contre
+  const COUNTER = { cav: ['lancier'], inf: ['archer', 'epeiste'], arch: ['cavalier', 'tirailleur'], siege: ['cavalier'], hero: ['lancier'] };
+  const pc = ['cav', 'inf', 'arch', 'siege', 'hero'].map(c => [c, playerCls(c)]), tot = pc.reduce((s, x) => s + x[1], 0);
+  if (tot >= 3 && Math.random() < 0.85) {
+    let r = Math.random() * tot;
+    for (const [c, n] of pc) { if ((r -= n) < 0) { const ok = COUNTER[c].filter(k => opts.includes(k)); if (ok.length) return ok[Math.floor(Math.random() * ok.length)]; break; } }
+  }
   if (b.type === 'atelier' && units.filter(u => u.team === 1 && u.def.cls === 'siege').length >= 2 + teams[1].age) return null;
   return opts[Math.floor(Math.random() * opts.length)];
 }
@@ -80,10 +84,16 @@ export function aiUpdate(dt) {
   }
   if (T.age >= 2 && !canTrain(h, 'heros') && T.res.or > 400) train(h, 'heros');
   const threat = units.find(u => u.team === 0 && d2(u.pos, h.pos) < 25); if (threat) aiDefend(threat);
+  // merveille : l'IA attaque celle du joueur en priorité (tout de suite si elle est finie) et en lance une en Difficile
+  const pW = buildings.find(b => b.team === 0 && b.def.wonder);
+  if (pW && pW.done && !ai.wonderRush) { ai.wonderRush = true; ai.nextWave = Math.min(ai.nextWave, ai.t); }
+  if (pW && pW.done) army.filter(s => !s.target && (!s.cmd || s.cmd.type !== 'attackMove')).forEach(s => cmdMove(s, pW.pos, 'attackMove'));
+  if (st.D.label === 'Difficile' && ai.t > 1500 && T.age >= 3 && !has('merveille') && RES.reduce((s, k) => s + T.res[k], 0) >= 3000) aiPlace('merveille', null, vills, 6);
   if (ai.t > ai.nextWave) {
     const idle = army.filter(s => !s.target && s.type !== 'heros' || (s.type === 'heros' && ai.waveN >= 2)), n = Math.min(idle.length, st.D.base + ai.waveN * st.D.grow);
     const eco = buildings.filter(b => b.team === 0 && b.done && ['moulin', 'camp_bois', 'camp_mine'].includes(b.type));
-    const tgt = (ai.waveN > 0 && eco.length && Math.random() < 0.35 ? eco[Math.floor(Math.random() * eco.length)] : null) || hdvOf(0) || buildings.find(b => b.team === 0);
+    const wonder = buildings.find(b => b.team === 0 && b.def.wonder);
+    const tgt = wonder || (ai.waveN > 0 && eco.length && Math.random() < 0.35 ? eco[Math.floor(Math.random() * eco.length)] : null) || hdvOf(0) || buildings.find(b => b.team === 0);
     if (n >= Math.min(3, st.D.base) && tgt) {
       idle.slice(0, n).forEach(s => cmdMove(s, tgt.pos, 'attackMove'));
       ai.waveN++; ai.nextWave = ai.t + Math.max(st.D.interval * 0.6, st.D.interval - ai.waveN * 10); msg(`⚔ Vague ennemie n°${ai.waveN} en approche (${n} unités) !`, 5000); sfx('horn');

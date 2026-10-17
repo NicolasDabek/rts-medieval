@@ -1,3 +1,4 @@
+import { BLD_PIERCE, computeDamage, rangeWith, shouldKite } from './rules.js';
 import { AGES, UNIT, TECHS, BUILD } from './data.js';
 import * as THREE from 'three';
 import { st } from './state.js';
@@ -6,7 +7,7 @@ import { HALF, sfx, teams } from './config.js';
 import { isVis } from './map.js';
 import { N, findPath, freeSlot, gridT, los, moveTo, rebuildGrid, toCell } from './path.js';
 import { G, mat, scene } from './render.js';
-import { endGame, msg } from './ui.js';
+import { announce, endGame, gameOver, msg } from './ui.js';
 import { addBuilding, addUnit, arrows, buildings, d2, edgeD, extOf, free, rand, resources, units, wallFree } from './world.js';
 
 
@@ -100,17 +101,9 @@ export function formation(sel, p, type) {
 }
 
 // ================= Combat =================
-export const BLD_PIERCE = 0.85;
 export const clsOf = t => t.kind === 'building' ? 'building' : t.def.cls;
-export function calcDmg(def, team, t) {
-  const up = teams[team].up, soldier = def.cls && def.cls !== 'villager' && def.cls !== 'siege';
-  const atk = def.atk + (soldier ? up.atk : 0) + (def.proj === 'arrow' ? up.projAtk : 0) + (def.bonus?.[clsOf(t)] || 0);
-  let arm;
-  if (t.kind === 'unit') { const td = t.def; arm = (def.proj ? td.ap : td.am) + (td.cls !== 'villager' && td.cls !== 'siege' ? teams[t.team].up.arm : 0); }
-  else { if (def.proj === 'arrow') return Math.max(0.5, Math.round(atk * (1 - BLD_PIERCE) * 10) / 10); arm = 2; } // bâtiments : -85 % contre les flèches
-  return Math.max(1, atk - arm);
-}
-export const rangeOf = (def, team) => def.range + (def.proj === 'arrow' ? teams[team].up.range : 0);
+export function calcDmg(def, team, t) { return computeDamage(def, teams[team].up, { kind: t.kind, def: t.def, up: t.kind === 'unit' ? teams[t.team].up : null }); }
+export const rangeOf = (def, team) => rangeWith(def, teams[team].up);
 export function nearestEnemy(u, r, buildingsOnly = false) {
   let best = null, bd = r;
   if (!buildingsOnly) for (const o of units) if (o.team !== u.team) { const d = d2(o.pos, u.pos) - o.radius; if (d < bd) { bd = d; best = o; } }
@@ -167,7 +160,7 @@ export function updateUnit(u, dt) {
     if (t.dead) { u.target = null; u.path = []; if (u.cmd?.type === 'attack') u.cmd = null; else if (u.cmd?.type === 'attackMove') moveTo(u, u.cmd.dest); }
     else {
       const d = edgeD(u.pos, t), rng = rangeOf(S, u.team);
-      const kite = S.kite && t.kind === 'unit' && t.def.range < 3 && t.def.cls !== 'siege' && d < 3.2 && u.cdT > 0.25;
+      const kite = t.kind === 'unit' && shouldKite(S, t.def, d, u.cdT);
       if (kite) { // recule entre deux tirs face à la mêlée
         const ax = u.pos.x - t.pos.x, az = u.pos.z - t.pos.z, al = Math.hypot(ax, az) || 1, st = S.speed * dt;
         const nx = u.pos.x + ax / al * st, nz = u.pos.z + az / al * st, [cx, cz] = toCell({ x: nx, z: nz });
@@ -268,6 +261,10 @@ export function updateUnit(u, dt) {
 }
 
 export function updateBuilding(b, dt) {
+  if (b.def.wonder && b.done && !gameOver) { // victoire par merveille : compte à rebours visible des deux camps
+    if (b.wonderT === undefined) { b.wonderT = b.def.wonder; msg(b.team === 0 ? '🏛️ Merveille terminée ! Tenez 5 minutes pour gagner.' : '🏛️ L\'ennemi a terminé une merveille ! Détruisez-la en moins de 5 minutes.', 6000); announce(b.team === 0 ? 'Merveille terminée : victoire dans 5 minutes' : 'Merveille ennemie terminée : détruisez-la en moins de 5 minutes'); sfx('horn'); }
+    b.wonderT -= dt; if (b.wonderT <= 0) endGame(b.team === 0, 'merveille');
+  }
   if (b.inner.userData.blades && b.done) b.inner.userData.blades.rotation.z += dt * 1.5;
   if (!b.done) return;
   if (b.queue.length) {

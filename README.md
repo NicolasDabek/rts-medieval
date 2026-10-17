@@ -23,3 +23,9 @@ Debug : `?diff=normal`, `?speed=10`, `?nofog`.
 - `world.js` entités + murs instanciés · `path.js` A* · `map.js` carte + brouillard
 - `units.js` économie/commandes/combat · `ai.js` IA · `ui.js` panneaux/HUD/minimap · `input.js` souris/tactile/clavier
 - `save.js` sauvegarde · `audio.js` sons
+
+## Équilibrage et tests
+- `rules.js` : formule de dégâts, portée et recul (kiting) partagés par le jeu et l'outil de duel.
+- `node tools/duel.mjs [budget] [essais]` : matrice des duels à coût égal (sans navigateur).
+- `npm test` : échoue si une unité bat toutes les autres à coût égal (budgets 300/600/1200).
+- Victoire alternative : la **Merveille** (âge impérial, 1000 de chaque ressource) fait gagner si elle tient 5 minutes.
