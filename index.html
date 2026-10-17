@@ -67,21 +67,39 @@ button:disabled{opacity:.4}
  #help{display:block;bottom:auto;top:calc(52px + 126px);right:6px;left:auto;width:116px;font-size:10px;border-radius:6px}
  #panel{border-top:2px solid #c9a35a}
 }
+/* passe UI 2 */
+#extra button{min-width:44px;min-height:44px;font-size:18px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center}
+#tools .tl{font-size:12px}
+.pill{transition:background .2s}.pill.up{animation:resUp .6s ease-out}.pill.lack{animation:resLack .9s ease-out}
+@keyframes resUp{0%{transform:scale(1.18);background:rgba(60,140,40,.95)}100%{transform:scale(1)}}
+@keyframes resLack{0%,40%,80%{background:#c02020;border-color:#ff6060}20%,60%,100%{background:rgba(40,25,10,.92)}}
+#panel .b.dis,#panel .card.dis{opacity:.4}
+#panel.empty{display:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#help .x{display:none}
+#panel .mrow{justify-content:flex-start}#panel .ports{display:flex;gap:2px}#panel .ports .por{font-size:24px;padding:2px 6px}#panel .who{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}#panel .who small{opacity:.9}.hpb{display:block;height:6px;background:#3a1a10;border-radius:3px;overflow:hidden;max-width:220px}.hpb i{display:block;height:100%;background:#4ec040}
+@media (pointer:coarse),(max-width:760px){
+ #extra button{min-width:44px;min-height:44px;font-size:16px}
+ #tools button{width:54px;height:56px}
+ #help{display:none;top:auto;bottom:calc(20px + env(safe-area-inset-bottom));left:70px;right:12px;width:auto;font-size:14px;padding:12px 40px 12px 14px;border-radius:12px;background:rgba(30,18,6,.94);border:1px solid #c9a35a;color:#f3e2b3}
+ #help.tip{display:block}
+ #help .x{display:block;position:absolute;top:4px;right:4px;width:36px;height:36px;background:transparent;border:none;font-size:20px;color:#f3e2b3}
+}
 </style>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head><body>
-<div id="hud" class="ui"><div id="resbar"><span class="pill" title="Nourriture">🍖 <b id="nourriture">0</b></span><span class="pill" title="Bois">🪵 <b id="bois">0</b></span><span class="pill" title="Or">💰 <b id="or">0</b></span><span class="pill" title="Pierre">🪨 <b id="pierre">0</b></span></div><div id="meta"><span title="Population">👥 <b id="pop">0</b></span> · <span title="Temps">⏱ <b id="time">0:00</b></span> <span class="agep" title="Époque">🏛 <b id="age"></b></span><span id="extra"></span></div></div>
+<div id="hud" class="ui"><div id="resbar"><span class="pill" title="Nourriture" role="img" aria-label="Nourriture">🍖 <b id="nourriture">0</b></span><span class="pill" title="Bois" role="img" aria-label="Bois">🪵 <b id="bois">0</b></span><span class="pill" title="Or" role="img" aria-label="Or">💰 <b id="or">0</b></span><span class="pill" title="Pierre" role="img" aria-label="Pierre">🪨 <b id="pierre">0</b></span></div><div id="meta"><span title="Population">👥 <b id="pop">0</b></span> · <span title="Temps">⏱ <b id="time">0:00</b></span> <span class="agep" title="Époque">🏛 <b id="age"></b></span><span id="extra"></span></div></div>
 <div id="wave"></div>
-<div id="tools">
- <button data-act="box" title="Mode sélection par cadre"><span class="ti">▭</span><span class="tl">Cadre</span></button>
- <button data-act="atk" title="Attaque-déplacement (F)"><span class="ti">⚔</span><span class="tl">Attaque</span></button>
- <button data-act="army" title="Sélectionner toute l'armée"><span class="ti">🛡</span><span class="tl">Armée</span></button>
- <button data-act="home" title="Centrer sur l'hôtel de ville (H)"><span class="ti">🏰</span><span class="tl">Base</span></button>
- <button data-act="idle" id="idleBtn" title="Villageois inactif (. ou I)"><span class="ti">💤</span><span class="tl">Inactifs</span></button>
- <button data-act="desel" title="Tout désélectionner (Échap)"><span class="ti">✖</span><span class="tl">Désél.</span></button>
+<div id="tools" role="toolbar" aria-label="Outils">
+ <button data-act="box" title="Mode sélection par cadre" aria-label="Mode sélection par cadre"><span class="ti">▭</span><span class="tl">Cadre</span></button>
+ <button data-act="atk" title="Attaque-déplacement (F)" aria-label="Attaque-déplacement (F)"><span class="ti">⚔</span><span class="tl">Attaque</span></button>
+ <button data-act="army" title="Sélectionner toute l'armée" aria-label="Sélectionner toute l'armée"><span class="ti">🛡</span><span class="tl">Armée</span></button>
+ <button data-act="home" title="Centrer sur l'hôtel de ville (H)" aria-label="Centrer sur l'hôtel de ville (H)"><span class="ti">🏰</span><span class="tl">Base</span></button>
+ <button data-act="idle" id="idleBtn" title="Villageois inactif (. ou I)" aria-label="Villageois inactif (. ou I)"><span class="ti">💤</span><span class="tl">Inactifs</span></button>
+ <button data-act="desel" title="Tout désélectionner (Échap)" aria-label="Tout désélectionner (Échap)"><span class="ti">✖</span><span class="tl">Désél.</span></button>
 </div>
-<div id="panel" class="ui"></div><div id="box"></div><div id="msg"></div>
-<canvas id="mini" width="160" height="160"></canvas>
+<div id="panel" class="ui" role="region" aria-label="Sélection"></div><div id="live" class="sr" role="status" aria-live="polite"></div><div id="box"></div><div id="msg"></div>
+<canvas id="mini" width="160" height="160" role="img" aria-label="Minicarte : touchez pour déplacer la vue"></canvas>
 <div id="help" data-touch="Toucher : sélectionner / donner un ordre · Appui long : sélectionner · 1 doigt : déplacer la vue · 2 doigts : zoom">Clic gauche / glisser : sélection (Maj = ajouter) · Clic droit : déplacer / récolter / attaquer / construire<br>F + clic : attaque-déplacement · R : pivoter · . : villageois inactif · WASD/ZQSD/flèches/bords : caméra · Molette : zoom · H : base · Ctrl+1..9 : groupe (1..9 ×2 = centrer) · Échap : annuler</div>
 <div id="start"><h1>⚔ RTS Médiéval</h1><p>Détruisez l'hôtel de ville ennemi (rouge). Choisissez la difficulté :</p>
 <div class="row"><button data-diff="facile">Facile</button><button data-diff="normal">Normal</button><button data-diff="difficile">Difficile</button></div>
