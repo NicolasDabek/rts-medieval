@@ -29,7 +29,7 @@ export function updateHUD() {
     const wd = buildings.filter(b => b.def.wonder && b.done).sort((a, c) => a.wonderT - c.wonderT)[0];
     if (wd) { const s = Math.max(0, Math.ceil(wd.wonderT)), mm = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; w.style.display = 'block'; w.textContent = wd.team === 0 ? `🏛️ Votre merveille : victoire dans ${mm}` : `🏛️ Merveille ennemie : défaite dans ${mm} — détruisez-la !`; }
   } else w.style.display = 'none';
-  const idle = units.filter(u => u.team === 0 && u.def.cls === 'villager' && !u.cmd).length; const ib = $('idleBtn'); if (ib) { ib.dataset.n = idle; ib.classList.toggle('warn', idle > 0); ib.setAttribute('aria-label', `Villageois inactifs : ${idle}`); }
+  const idle = units.filter(u => u.team === 0 && u.def.cls === 'villager' && !u.cmd).length; const ib = $('idleBtn'); if (ib) { ib.dataset.n = idle; ib.classList.toggle('warn', idle > 0); const it = idle ? `${idle} villageois inactif${idle > 1 ? 's' : ''} (sans tâche) — cliquez pour les sélectionner un par un et centrer la vue (touche .)` : 'Aucun villageois inactif'; ib.setAttribute('aria-label', it); ib.title = it; }
   if (st.started && !gameOver) {
     if (ai.waveN > ann.wave) { ann.wave = ai.waveN; announce(`Alerte : la vague ennemie ${ai.waveN} attaque !`); }
     else if (ai.nextWave - ai.t <= 60 && ai.nextWave - ai.t > 0 && ann.soon !== ai.nextWave) { ann.soon = ai.nextWave; announce('Vague ennemie dans une minute'); }
@@ -229,9 +229,11 @@ export function drawMini() {
   mctx.fillStyle = '#4f7d38'; mctx.fillRect(0, 0, mini.width, mini.height);
   const C = { bois: '#1f4a1c', pierre: '#9a9a9a', or: '#f0c030', nourriture: '#d04060' };
   for (const r of resources) if (r.mesh.visible) { mctx.fillStyle = C[r.type]; mctx.fillRect((r.pos.x + HALF) * MS - 1, (r.pos.z + HALF) * MS - 1, 2, 2); }
-  for (const b of buildings) if (b.team === 0 || b.mesh.visible) { mctx.fillStyle = b.team ? '#ff4040' : '#4080ff'; const s = Math.max(2, b.radius * MS * 1.6); mctx.fillRect((b.pos.x + HALF) * MS - s / 2, (b.pos.z + HALF) * MS - s / 2, s, s); }
-  for (const u of units) if (u.team === 0 || u.mesh.visible) { mctx.fillStyle = u.team ? '#ff8080' : (u.selected ? '#ffffff' : '#90c0ff'); mctx.fillRect((u.pos.x + HALF) * MS - 1.5, (u.pos.z + HALF) * MS - 1.5, 3, 3); }
-  if (!NOFOG) { for (let k = 0; k < FN * FN; k++) fimg.data[k * 4 + 3] = visible[k] ? 0 : explored[k] ? 110 : 255; fctx.putImageData(fimg, 0, 0); mctx.drawImage(fogCanvas, 0, 0, mini.width, mini.height); }
+  // brouillard : inexploré = silhouette sombre de la carte (pas noir), exploré = voile léger
+  if (!NOFOG) { const d = fimg.data; for (let k = 0; k < FN * FN; k++) { d[k * 4] = 14; d[k * 4 + 1] = 24; d[k * 4 + 2] = 12; d[k * 4 + 3] = visible[k] ? 0 : explored[k] ? 80 : 175; } fctx.putImageData(fimg, 0, 0); mctx.imageSmoothingEnabled = true; mctx.drawImage(fogCanvas, 0, 0, mini.width, mini.height); }
+  // par-dessus le brouillard : nos unités/bâtiments, et les bâtiments ennemis déjà repérés
+  for (const b of buildings) if (b.team === 0 || b.mesh.visible) { const s = Math.max(3, b.radius * MS * 1.6), x = (b.pos.x + HALF) * MS - s / 2, y = (b.pos.z + HALF) * MS - s / 2; mctx.fillStyle = b.team ? (b.dimmed ? '#a03030' : '#ff4040') : '#4a90ff'; mctx.fillRect(x, y, s, s); mctx.strokeStyle = '#000'; mctx.lineWidth = 1; mctx.strokeRect(x, y, s, s); }
+  for (const u of units) if (u.team === 0 || u.mesh.visible) { mctx.fillStyle = u.team ? '#ff8080' : (u.selected ? '#ffffff' : '#a8d0ff'); mctx.fillRect((u.pos.x + HALF) * MS - 2, (u.pos.z + HALF) * MS - 2, 4, 4); }
   const pts = [[0, 0], [innerWidth, 0], [innerWidth, innerHeight], [0, innerHeight]].map(([x, y]) => groundAt(x, y) || camTarget);
   mctx.strokeStyle = '#fff'; mctx.lineWidth = 1; mctx.beginPath(); pts.forEach((p, i) => mctx[i ? 'lineTo' : 'moveTo']((p.x + HALF) * MS, (p.z + HALF) * MS)); mctx.closePath(); mctx.stroke();
 }

@@ -85,6 +85,17 @@ button:disabled{opacity:.4}
  #help.tip{display:block}
  #help .x{display:block;position:absolute;top:4px;right:4px;width:36px;height:36px;background:transparent;border:none;font-size:20px;color:#f3e2b3}
 }
+/* passe UI 3 */
+#panel .close{min-width:44px;min-height:44px;font-size:24px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:12;display:none;align-items:center;justify-content:center;padding:12px}
+.modal.on{display:flex}
+.modal .card{position:relative;background:rgba(30,18,6,.97);color:#f3e2b3;border:1px solid #c9a35a;border-radius:14px;max-width:560px;width:100%;max-height:85vh;overflow:auto;padding:16px 18px;font-size:15px;line-height:1.45}
+.modal h2{margin:0 0 8px;font-size:20px;padding-right:44px}.modal h3{margin:12px 0 4px;font-size:16px;color:#ffd890}.modal ul{margin:0;padding-left:20px}
+.xbtn{position:absolute;top:8px;right:8px;width:44px;height:44px;background:transparent;border:none;font-size:24px;color:#f3e2b3}
+.modal .row2{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}.modal .row2 button{min-height:44px;padding:0 16px}
+#tuto{position:fixed;left:50%;transform:translateX(-50%);top:calc(96px + env(safe-area-inset-top));z-index:9;width:min(440px,calc(100% - 24px));background:rgba(30,18,6,.95);border:1px solid #c9a35a;border-radius:12px;color:#f3e2b3;padding:12px 14px;display:none;font-size:15px}
+#tuto.on{display:block}#tuto b{color:#ffd890}#tuto .st{font-size:12px;opacity:.8}#tuto .row2{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}#tuto button{min-height:44px;padding:0 14px}
+@media (pointer:coarse),(max-width:760px){ #tuto{top:auto;bottom:calc(150px + env(safe-area-inset-bottom))} }
 </style>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head><body>
@@ -99,8 +110,15 @@ button:disabled{opacity:.4}
  <button data-act="desel" title="Tout désélectionner (Échap)" aria-label="Tout désélectionner (Échap)"><span class="ti">✖</span><span class="tl">Désél.</span></button>
 </div>
 <div id="panel" class="ui" role="region" aria-label="Sélection"></div><div id="live" class="sr" role="status" aria-live="polite"></div><div id="box"></div><div id="msg"></div>
+<div id="helpBox" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpT"><div class="card"><button class="xbtn" data-close aria-label="Fermer l'aide">✕</button>
+<h2 id="helpT">❓ Aide</h2>
+<h3>🖱️ Sur ordinateur</h3><ul><li>Clic gauche / glisser : sélectionner (Maj = ajouter)</li><li>Clic droit : déplacer, récolter, attaquer, construire</li><li>F + clic : attaque-déplacement · Échap : annuler · X : arrêter</li><li>R : pivoter un bâtiment · H : hôtel de ville · « . » : villageois inactif</li><li>Ctrl+1..9 : créer un groupe · 1..9 : le sélectionner (2× = centrer)</li><li>WASD/ZQSD, flèches ou bords : caméra · molette : zoom</li></ul>
+<h3>📱 Sur mobile</h3><ul><li>Toucher : sélectionner, puis toucher le sol / une ressource / un ennemi pour donner l'ordre</li><li>Appui long : sélectionner sans donner d'ordre</li><li>1 doigt : déplacer la vue · 2 doigts : zoom</li><li>Minicarte : toucher pour déplacer la vue</li></ul>
+<h3>🎯 But</h3><ul><li>Détruisez l'hôtel de ville ennemi, ou faites tenir une Merveille 5 minutes (âge impérial).</li><li>💤 Inactifs : nombre de villageois sans tâche ; touchez le bouton pour les retrouver.</li></ul>
+<div class="row2"><button id="tutoAgain">🎓 Revoir le tutoriel</button></div></div></div>
+<div id="tuto" role="dialog" aria-live="polite" aria-label="Tutoriel"></div>
 <canvas id="mini" width="160" height="160" role="img" aria-label="Minicarte : touchez pour déplacer la vue"></canvas>
-<div id="help" data-touch="Toucher : sélectionner / donner un ordre · Appui long : sélectionner · 1 doigt : déplacer la vue · 2 doigts : zoom">Clic gauche / glisser : sélection (Maj = ajouter) · Clic droit : déplacer / récolter / attaquer / construire<br>F + clic : attaque-déplacement · R : pivoter · . : villageois inactif · WASD/ZQSD/flèches/bords : caméra · Molette : zoom · H : base · Ctrl+1..9 : groupe (1..9 ×2 = centrer) · Échap : annuler</div>
+
 <div id="start"><h1>⚔ RTS Médiéval</h1><p>Détruisez l'hôtel de ville ennemi (rouge). Choisissez la difficulté :</p>
 <div class="row"><button data-diff="facile">Facile</button><button data-diff="normal">Normal</button><button data-diff="difficile">Difficile</button></div>
 <p><button id="loadBtn" style="display:none">📂 Reprendre la partie sauvegardée</button></p>

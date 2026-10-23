@@ -67,7 +67,7 @@ export const game = {
 };
 window.__game = game;
 export function boot(skipMap = false) {
-  if (isTouch) { const hp = $('help'); hp.textContent = hp.dataset.touch; }
+
   if (!skipMap) generateMap();
   camTarget.copy(hdvOf(0)?.pos || P0); updateCam(); updateFog(); updateHUD(); loop();
   if (!st.started) $('start').style.display = 'flex';
