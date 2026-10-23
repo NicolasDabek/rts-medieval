@@ -11,8 +11,10 @@ function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let
 
 // Combat N contre N sur une ligne : déplacement vers l'ennemi le plus proche, tir quand à portée, recul (kiting) selon rules.js
 export function fight(a, b, budget = 600, seed = 1, maxT = 180) {
+  // le héros est unique en jeu : testé seul (1 héros) contre le même coût d'adversaires
+  if (a === 'heros' || b === 'heros') budget = costOf(UNIT.heros);
   const R = rng(seed), mk = (type, side) => { const d = UNIT[type], n = Math.max(1, Math.round(budget / costOf(d))), out = [];
-    for (let i = 0; i < n; i++) out.push({ type, d, side, x: side ? 30 + R() * 3 : -R() * 3, hp: d.hp, cdT: R() * d.cd, spd: d.speed * (0.95 + R() * 0.1) }); return out; };
+    for (let i = 0; i < n; i++) out.push({ type, d, side, x: side ? 30 + R() * 3 + (R() * 2 - 1) : -R() * 3 + (R() * 2 - 1), hp: d.hp, cdT: R() * d.cd, spd: d.speed * (0.95 + R() * 0.1) }); return out; };
   const all = [...mk(a, 0), ...mk(b, 1)], dt = 0.05;
   let t = 0;
   for (; t < maxT; t += dt) {
@@ -24,7 +26,7 @@ export function fight(a, b, budget = 600, seed = 1, maxT = 180) {
       if (!tg) continue;
       const dist = Math.max(0, bd - 2 * BODY), dir = Math.sign(tg.x - u.x) || 1;
       if (shouldKite(u.d, tg.d, dist, u.cdT)) { u.x -= dir * u.spd * dt; continue; }
-      if (dist <= rangeWith(u.d, null)) { if (u.cdT <= 0) { u.cdT = u.d.cd; tg.hp -= computeDamage(u.d, null, { kind: 'unit', def: tg.d, up: null }); } }
+      if (dist <= rangeWith(u.d, null)) { if (u.cdT <= 0) { u.cdT = u.d.cd; tg.hp -= computeDamage(u.d, null, { kind: 'unit', def: tg.d, up: null }) * (0.9 + R() * 0.2); tg.lastHit = t; } }
       else u.x += dir * u.spd * dt;
       if (u.d.regen && t - (u.lastHit ?? -9) > 5) u.hp = Math.min(u.d.hp, u.hp + u.d.regen * dt);
     }

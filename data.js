@@ -10,17 +10,17 @@ export const AGES = [
   { name: 'Âge impérial', cost: { nourriture: 900, or: 600, pierre: 100 }, time: 65 },
 ];
 
-// cls : villager | inf | arch | cav | siege | hero  — am/ap : armure mêlée/perçante — bonus : dégâts en plus contre une classe
+// cls : villager | inf | skirm | arch | cav | siege | hero  — am/ap : armure mêlée/perçante — bonus : dégâts en plus contre une classe
 export const UNIT = {
   villageois: { label: 'Villageois', icon: '👷', cls: 'villager', hp: 25, atk: 3, range: 1.2, cd: 1.5, speed: 5.5, am: 0, ap: 0, cost: { nourriture: 50 }, time: 7, aggro: 0, b: 'hdv', age: 0 },
   epeiste: { label: 'Épéiste', icon: '🗡️', cls: 'inf', hp: 60, atk: 7, range: 1.3, cd: 1, speed: 5, am: 1, ap: 1, cost: { nourriture: 60, or: 20 }, time: 9, aggro: 11, b: 'caserne', age: 0, bonus: { building: 4, inf: 2 }, desc: 'Infanterie polyvalente, bonne contre les bâtiments' },
-  lancier: { label: 'Lancier', icon: '🔱', cls: 'inf', hp: 50, atk: 4, range: 1.6, cd: 1, speed: 5.2, am: 0, ap: 0, cost: { nourriture: 35, bois: 25 }, time: 7, aggro: 11, b: 'caserne', age: 1, bonus: { cav: 10, hero: 8 }, desc: 'Anti-cavalerie' },
-  archer: { label: 'Archer', icon: '🏹', cls: 'arch', hp: 40, atk: 5, range: 10, cd: 1.6, speed: 5.8, am: 0, ap: 0, cost: { bois: 25, or: 40 }, time: 8, aggro: 12, b: 'archerie', age: 1, bonus: { inf: 3 }, kite: true, proj: 'arrow', desc: "Tir à distance, efficace contre l'infanterie (inefficace contre les bâtiments)" },
-  tirailleur: { label: 'Tirailleur', icon: '🎯', cls: 'inf', hp: 50, atk: 4, range: 5, cd: 1.5, speed: 5.4, am: 0, ap: 4, cost: { nourriture: 35, bois: 30 }, time: 8, aggro: 11, b: 'caserne', age: 1, bonus: { arch: 5 }, proj: 'arrow', desc: 'Javelots, bouclier : anti-archers, résiste aux flèches' },
-  cavalier: { label: 'Cavalier', icon: '🐎', cls: 'cav', hp: 110, atk: 9, range: 1.5, cd: 1.2, speed: 8, am: 2, ap: 2, cost: { nourriture: 70, or: 60 }, time: 11, aggro: 13, b: 'ecurie', age: 1, bonus: { arch: 7, siege: 10 }, radius: 0.75, desc: 'Rapide, écrase archers et engins de siège' },
+  lancier: { label: 'Lancier', icon: '🔱', cls: 'inf', hp: 50, atk: 5, range: 1.6, cd: 1, speed: 5.2, am: 0, ap: 0, cost: { nourriture: 35, bois: 25 }, time: 7, aggro: 11, b: 'caserne', age: 1, bonus: { cav: 6, hero: 8 }, desc: 'Anti-cavalerie' },
+  archer: { label: 'Archer', icon: '🏹', cls: 'arch', hp: 40, atk: 6, range: 10, cd: 1.6, speed: 5.8, am: 0, ap: 0, cost: { bois: 25, or: 40 }, time: 8, aggro: 12, b: 'archerie', age: 1, bonus: { inf: 2 }, kite: true, proj: 'arrow', desc: "Tir à distance, efficace contre l'infanterie (inefficace contre les bâtiments)" },
+  tirailleur: { label: 'Tirailleur', icon: '🎯', cls: 'skirm', hp: 50, atk: 5, range: 5, cd: 1.5, speed: 5.4, am: 0, ap: 4, cost: { nourriture: 35, bois: 30 }, time: 8, aggro: 11, b: 'caserne', age: 1, bonus: { arch: 4, cav: 2 }, kite: true, proj: 'arrow', desc: 'Javelots, bouclier : anti-archers, résiste aux flèches' },
+  cavalier: { label: 'Cavalier', icon: '🐎', cls: 'cav', hp: 110, atk: 8, range: 1.5, cd: 1.2, speed: 8, am: 3, ap: 2, cost: { nourriture: 70, or: 60 }, time: 11, aggro: 13, b: 'ecurie', age: 1, bonus: { arch: 5, skirm: 3, siege: 10 }, radius: 0.75, desc: 'Rapide, écrase archers et engins de siège' },
   belier: { label: 'Bélier', icon: '🐏', cls: 'siege', hp: 180, atk: 2, range: 2, cd: 2.5, speed: 3.2, am: 0, ap: 25, cost: { bois: 160, or: 75 }, time: 16, aggro: 14, siegeOnly: true, b: 'atelier', age: 2, bonus: { building: 60 }, radius: 0.95, desc: 'Détruit les bâtiments, insensible aux flèches' },
   catapulte: { label: 'Catapulte', icon: '☄️', cls: 'siege', hp: 80, atk: 14, range: 15, cd: 3.2, speed: 3, am: 0, ap: 4, cost: { bois: 200, or: 150 }, time: 18, aggro: 16, b: 'atelier', age: 2, bonus: { building: 45 }, proj: 'stone', splash: 2.2, radius: 0.95, desc: 'Longue portée, dégâts de zone' },
-  heros: { label: 'Héros (Roland)', icon: '👑', cls: 'hero', hp: 450, atk: 16, range: 1.6, cd: 1, speed: 6.5, am: 3, ap: 4, cost: { nourriture: 200, or: 200 }, time: 20, aggro: 13, b: 'hdv', age: 2, limit: 1, regen: 0.8, desc: 'Unique, se soigne hors combat' },
+  heros: { label: 'Héros (Roland)', icon: '👑', cls: 'hero', hp: 320, atk: 13, range: 1.6, cd: 1, speed: 6.5, am: 3, ap: 1, cost: { nourriture: 200, or: 200 }, time: 20, aggro: 13, b: 'hdv', age: 2, limit: 1, regen: 0.5, desc: 'Unique, se soigne hors combat' },
 };
 
 export const BUILD = {
