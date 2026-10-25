@@ -1,4 +1,4 @@
-import { RES, AGES, BUILD, UNIT, RES_LABEL, TECHS, RES_ICON } from './data.js';
+import { RES, AGES, BUILD, UNIT, RES_LABEL, TECHS, RES_ICON, DIFFS } from './data.js';
 import * as THREE from 'three';
 import { st } from './state.js';
 import { ai } from './ai.js';
@@ -6,7 +6,7 @@ import { $, HALF, NOFOG, SIZE, costTxt, isTouch, sfx, teams } from './config.js'
 import { groundAt } from './input.js';
 import { FN, explored, isExp, visible } from './map.js';
 import { Bx, camTarget, scene, updateCam } from './render.js';
-import { ageLock, ageUp, canAge, canPay, canTech, canTrain, cmdBuild, cmdGather, formation, hdvOf, kill, placeBuilding, placeWall, popCap, popCount, refund, resTypeOf, research, train } from './units.js';
+import { ageLock, ageUp, canAge, canPay, canTech, canTrain, cmdBuild, cmdGather, formation, hdvOf, kill, placeBuilding, placeWall, popCap, popCount, refund, resTypeOf, research, stats, train } from './units.js';
 import { buildingMesh, buildings, d2, extOf, free, resources, units, wallFree } from './world.js';
 
 export let msgT;
@@ -40,6 +40,7 @@ export function updateHUD() {
 }
 const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ESC[c]);
+export const BUILD_CATS = [['Économie', ['maison', 'camp_bois', 'camp_mine', 'moulin', 'ferme', 'hdv']], ['Militaire', ['caserne', 'archerie', 'ecurie', 'forge', 'atelier', 'universite']], ['Défense', ['palissade', 'muraille', 'porte', 'tour']], ['Prestige', ['merveille']]];
 export function bt(act, icon, label, sub, reason, desc = '') {
   if (reason === 'x' || (isTouch && reason?.startsWith('🔒 Âge'))) return ''; // sur mobile on masque ce qui est verrouillé par l'âge
   const lack = reason === 'Ressources insuffisantes';
@@ -112,7 +113,12 @@ export function renderPanel() {
     h = '<div class="hd">' + Object.entries(c).map(([t, n]) => `<button class="por" data-act="only:${t}" title="${esc(UNIT[t].label)}">${UNIT[t].icon}<sub>${n}</sub></button>`).join('');
     if (sel.length === 1) { const u = sel[0]; h += ` <b>${esc(u.def.label)}</b> — PV ${Math.ceil(u.hp)}/${u.maxHp} · ⚔${u.def.atk + (u.def.cls !== 'villager' && u.def.cls !== 'siege' ? teams[0].up.atk : 0)} 🛡${u.def.am}/${u.def.ap}`; if (u.carry) h += ` · ${RES_ICON[u.carryType]} ${u.carry}`; }
     h += '</div>' + bt('stop', '⏹', 'Arrêter' + (isTouch ? '' : ' (X)'), '', null);
-    if (c.villageois) for (const k of Object.keys(BUILD)) h += bt('place:' + k, BUILD[k].icon, BUILD[k].label, costTxt(BUILD[k].cost) + (BUILD[k].wall ? '/m' : ''), canBuild(k));
+    // bâtiments groupés par catégorie ; ceux de plus d'un âge d'avance sont masqués
+    if (c.villageois) for (const [cat, keys] of BUILD_CATS) {
+      const ks = keys.filter(k => BUILD[k] && !(BUILD[k].age > teams[0].age + 1)); if (!ks.length) continue;
+      const btns = ks.map(k => bt('place:' + k, BUILD[k].icon, BUILD[k].label, costTxt(BUILD[k].cost) + (BUILD[k].wall ? '/m' : ''), canBuild(k))).join('');
+      if (btns) h += `<div class="grp" role="group" aria-label="${cat}"><div class="gl">${cat}</div>${btns}</div>`;
+    }
   } else h = `<i>${isTouch ? 'Touchez une unité ou un bâtiment (appui long = sélection)' : 'Aucune sélection — clic sur une unité ou un bâtiment'}</i>`;
   $('panel').classList.toggle('empty', MOBILE && !mp && !sel.length && !st.selBuilding);
   if (h !== panelHTML) { panelHTML = h; $('panel').innerHTML = h; }
@@ -249,5 +255,11 @@ export function endGame(win, why = 'hdv') {
   if (gameOver) return; gameOver = true; sfx(win ? 'age' : 'horn');
   $('endTitle').textContent = win ? '🏆 Victoire !' : '💀 Défaite…';
   $('endSub').textContent = why === 'merveille' ? (win ? 'Votre merveille a tenu 5 minutes.' : 'La merveille ennemie a tenu 5 minutes.') : win ? "L'hôtel de ville ennemi est détruit." : 'Votre hôtel de ville a été détruit.';
-  $('end').style.display = 'flex';
+  const S = stats(0), tm = Math.floor(st.gameTime || 0), fmt = `${Math.floor(tm / 60)} min ${String(tm % 60).padStart(2, '0')} s`;
+  const rows = [['⏱️ Durée', fmt], ['🏰 Âge atteint', AGES[teams[0].age]?.name || AGES[teams[0].age]?.label || ''], ['🪖 Unités formées', S.trained], ['💀 Unités perdues', S.lost], ['⚔️ Ennemis éliminés', S.killed], ['📦 Ressources récoltées', S.gathered]];
+  $('endSum').innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(String(v))}</dd>`).join('');
+  $('end').style.display = 'flex'; $('replayBtn').focus();
 }
+const diffKey = () => Object.entries(DIFFS).find(([, d]) => d === st.D)?.[0];
+$('replayBtn').addEventListener('click', () => { const k = diffKey(); location.href = location.pathname + (k ? '?diff=' + k : ''); });
+$('menuBtn').addEventListener('click', () => { location.href = location.pathname; });

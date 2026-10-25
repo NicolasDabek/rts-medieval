@@ -127,8 +127,10 @@ export function damage(t, dmg, src) {
   if (t.team === 1 && src && src.kind === 'unit') aiDefend(src);
   if (t.hp <= 0) kill(t);
 }
+// statistiques de partie (écran de fin)
+export const stats = t => teams[t].stats || (teams[t].stats = { trained: 0, lost: 0, killed: 0, gathered: 0 });
 export function kill(e, silent = false) {
-  if (e.dead) return; e.dead = true; scene.remove(e.mesh); if (e.bar) scene.remove(e.bar); if (e.flag) scene.remove(e.flag);
+  if (e.dead) return; e.dead = true; if (e.kind === 'unit') { stats(e.team).lost++; stats(1 - e.team).killed++; } scene.remove(e.mesh); if (e.bar) scene.remove(e.bar); if (e.flag) scene.remove(e.flag);
   const arr = e.kind === 'unit' ? units : e.kind === 'building' ? buildings : resources; const i = arr.indexOf(e); if (i >= 0) arr.splice(i, 1);
   if (e.kind !== 'unit' && !silent) rebuildGrid();
   if (e === st.selBuilding) st.selBuilding = null;
@@ -243,7 +245,7 @@ export function updateUnit(u, dt) {
       }
     } else if (u.state === 'toDrop') {
       const h = dropFor(u.team, u.carryType || 'bois', u.pos); if (!h) { u.cmd = null; return; }
-      if (edgeD(u.pos, h) < 1.4) { if (u.carryType) T.res[u.carryType] += u.carry; u.carry = 0; u.state = 'toRes'; if (r && !r.dead) moveTo(u, r.pos); }
+      if (edgeD(u.pos, h) < 1.4) { if (u.carryType) { T.res[u.carryType] += u.carry; stats(u.team).gathered += u.carry; } u.carry = 0; u.state = 'toRes'; if (r && !r.dead) moveTo(u, r.pos); }
       else if (!u.path.length) moveTo(u, h.pos);
     }
     u.carryMesh.visible = u.carry > 0; if (u.carryType) u.carryMesh.material.color.set(RES_COLORS[u.carryType]);
@@ -273,6 +275,7 @@ export function updateBuilding(b, dt) {
       const q = b.queue.shift(), T = teams[b.team];
       if (q.kind === 'unit') {
         const dir = new THREE.Vector3(-b.pos.x, 0, -b.pos.z).normalize();
+        stats(b.team).trained++;
         const u = addUnit(q.id, b.team, b.pos.x + dir.x * (b.radius + 1.5) + rand(-1, 1), b.pos.z + dir.z * (b.radius + 1.5) + rand(-1, 1));
         if (b.rally) {
           const rr = b.rally.res && (b.rally.res.dead ? nearestRes(resTypeOf(b.rally.res), b.rally.pos, 20) : b.rally.res);

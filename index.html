@@ -96,6 +96,20 @@ button:disabled{opacity:.4}
 #tuto{position:fixed;left:50%;transform:translateX(-50%);top:calc(96px + env(safe-area-inset-top));z-index:9;width:min(440px,calc(100% - 24px));background:rgba(30,18,6,.95);border:1px solid #c9a35a;border-radius:12px;color:#f3e2b3;padding:12px 14px;display:none;font-size:15px}
 #tuto.on{display:block}#tuto b{color:#ffd890}#tuto .st{font-size:12px;opacity:.8}#tuto .row2{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}#tuto button{min-height:44px;padding:0 14px}
 @media (pointer:coarse),(max-width:760px){ #tuto{top:auto;bottom:calc(150px + env(safe-area-inset-bottom))} }
+/* passe UI 4 */
+#panel .b{width:86px}#panel .b .t{font-size:12px;line-height:1.15}#panel .b .c{font-size:12px;opacity:1}
+.por{min-width:44px;min-height:44px}.por sub{font-size:12px}
+#tools .tl{font-size:12px}
+button:disabled,#panel .card:disabled{opacity:1;background:#2b2419;color:#d2c6ab;border:1px dashed #7a6644;cursor:not-allowed}
+button:disabled .i{filter:grayscale(1);opacity:.6}
+#panel .grp{margin-top:4px}#panel .gl{font-size:12px;font-weight:bold;color:#ffd890;margin:2px 2px 0;text-transform:uppercase;letter-spacing:.04em}
+@media (pointer:fine) and (min-width:761px){ #panel{left:66px} }
+#panel small{font-size:12px}
+#tuto{box-sizing:border-box}
+@media (pointer:coarse),(max-width:760px){ #tuto{left:70px;right:8px;width:auto;transform:none} }
+#end .sum{display:grid;grid-template-columns:auto auto;gap:4px 18px;font-size:17px;background:rgba(30,18,6,.9);border:1px solid #c9a35a;border-radius:10px;padding:12px 18px;margin:0 0 18px}
+#end .sum dt{opacity:.85}#end .sum dd{margin:0;font-weight:bold;text-align:right}
+#end .row2{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}#end button{min-height:48px}
 </style>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head><body>
@@ -123,6 +137,6 @@ button:disabled{opacity:.4}
 <div class="row"><button data-diff="facile">Facile</button><button data-diff="normal">Normal</button><button data-diff="difficile">Difficile</button></div>
 <p><button id="loadBtn" style="display:none">📂 Reprendre la partie sauvegardée</button></p>
 <p class="small">Facile : vagues petites et tardives (~8 min) · Normal : 1re vague vers 5:30 · Difficile : IA plus rapide, qui reçoit un bonus de ressources</p></div>
-<div id="end"><h1 id="endTitle"></h1><p id="endSub"></p><button onclick="location.reload()">Rejouer</button></div>
+<div id="end" role="dialog" aria-labelledby="endTitle"><h1 id="endTitle"></h1><p id="endSub"></p><dl class="sum" id="endSum"></dl><div class="row2"><button id="replayBtn">🔁 Rejouer</button><button id="menuBtn">🏠 Menu</button></div></div>
 <script type="module" src="./app.js"></script>
 </body></html>

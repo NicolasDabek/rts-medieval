@@ -10,7 +10,7 @@ export function serialize(g) {
   let exp = ''; for (let i = 0; i < g.explored.length; i++) exp += g.explored[i] ? '1' : '0';
   return JSON.stringify({
     v: 2, date: Date.now(), time: g.gameTime, D: Object.keys(DIFFS).find(k => DIFFS[k] === g.D) || 'normal', ai: { ...g.ai },
-    teams: g.teams.map(t => ({ res: t.res, age: t.age, techs: [...t.techs] })),
+    teams: g.teams.map(t => ({ res: t.res, age: t.age, techs: [...t.techs], st: t.stats })),
     res: g.resources.map(r => [r.sub, r1(r.pos.x), r1(r.pos.z), r.amount, r.hunted ? 1 : 0]),
     buildings: g.buildings.map(b => ({ t: b.type, tm: b.team, x: r1(b.pos.x), z: r1(b.pos.z), r: b.rot, hp: b.hp, mh: b.maxHp, d: b.done, p: b.progress, a: b.amount, q: b.queue, tt: b.trainT, s: b.seen, wt: b.wonderT, ra: b.rally ? [r1(b.rally.pos.x), r1(b.rally.pos.z), refOf(g, b.rally.res)] : null })),
     units: g.units.map(u => [u.type, u.team, r1(u.pos.x), r1(u.pos.z), u.hp, u.carry, u.carryType, cmdOf(g, u)]),
@@ -18,7 +18,7 @@ export function serialize(g) {
   });
 }
 export function loadInto(g, s) {
-  s.teams.forEach((t, i) => { t.techs.forEach(id => g.applyTech(i, id)); Object.assign(g.teams[i].res, t.res); g.teams[i].age = t.age; });
+  s.teams.forEach((t, i) => { t.techs.forEach(id => g.applyTech(i, id)); Object.assign(g.teams[i].res, t.res); g.teams[i].age = t.age; if (t.st) g.teams[i].stats = { ...t.st }; });
   for (const [sub, x, z, a] of s.res) g.addResource(sub, x, z, a, true);
   for (const o of s.buildings) {
     const b = g.addBuilding(o.t, o.tm, o.x, o.z, o.d, o.r, true);
