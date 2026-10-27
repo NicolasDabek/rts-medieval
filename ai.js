@@ -28,7 +28,7 @@ export const playerCls = c => units.filter(u => u.team === 0 && u.def.cls === c)
 export function aiPickUnit(b) {
   const opts = Object.keys(UNIT).filter(k => UNIT[k].b === b.type && k !== 'villageois' && k !== 'heros' && !canTrain(b, k)); if (!opts.length) return null;
   // réponse proportionnelle : la part de chaque classe dans l'armée du joueur = la part des formations IA dédiées à son contre
-  const COUNTER = { cav: ['lancier'], inf: ['archer', 'epeiste'], arch: ['cavalier', 'tirailleur'], skirm: ['epeiste', 'cavalier'], siege: ['cavalier'], hero: ['lancier'] };
+  const COUNTER = { cav: ['lancier', 'epeiste'], inf: ['archer', 'tirailleur'], arch: ['cavalier', 'tirailleur'], skirm: ['cavalier'], siege: ['cavalier'], hero: ['lancier'] };
   const pc = ['cav', 'inf', 'arch', 'siege', 'hero'].map(c => [c, playerCls(c)]), tot = pc.reduce((s, x) => s + x[1], 0);
   if (tot >= 3 && Math.random() < 0.85) {
     let r = Math.random() * tot;

@@ -10,11 +10,15 @@ const BODY = 0.6; // demi-largeur d'une unité : la portée se compte bord à bo
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 // Combat N contre N sur une ligne : déplacement vers l'ennemi le plus proche, tir quand à portée, recul (kiting) selon rules.js
+export const spent = (type, budget) => { const c = costOf(UNIT[type]), n = Math.floor(budget / c), f = budget / c - n; return c * (n + (f > 0.01 ? f : 0)); };
 export function fight(a, b, budget = 600, seed = 1, maxT = 180) {
   // le héros est unique en jeu : testé seul (1 héros) contre le même coût d'adversaires
   if (a === 'heros' || b === 'heros') budget = costOf(UNIT.heros);
-  const R = rng(seed), mk = (type, side) => { const d = UNIT[type], n = Math.max(1, Math.round(budget / costOf(d))), out = [];
-    for (let i = 0; i < n; i++) out.push({ type, d, side, x: side ? 30 + R() * 3 + (R() * 2 - 1) : -R() * 3 + (R() * 2 - 1), hp: d.hp, cdT: R() * d.cd, spd: d.speed * (0.95 + R() * 0.1) }); return out; };
+  // n = floor(budget/coût) unités entières + une dernière unité dont les PV sont réduits au prorata du budget restant :
+  // les deux camps dépensent exactement le même budget (écart < 1 %)
+  const R = rng(seed), mk = (type, side) => { const d = UNIT[type], c = costOf(d), n = Math.floor(budget / c), frac = budget / c - n, out = [];
+    const add = f => { const hp = d.hp * f; out.push({ type, d, side, x: side ? 30 + R() * 3 + (R() * 2 - 1) : -R() * 3 + (R() * 2 - 1), hp, maxHp: hp, cdT: R() * d.cd, spd: d.speed * (0.95 + R() * 0.1) }); };
+    for (let i = 0; i < n; i++) add(1); if (frac > 0.01) add(frac); return out; };
   const all = [...mk(a, 0), ...mk(b, 1)], dt = 0.05;
   let t = 0;
   for (; t < maxT; t += dt) {
@@ -28,7 +32,7 @@ export function fight(a, b, budget = 600, seed = 1, maxT = 180) {
       if (shouldKite(u.d, tg.d, dist, u.cdT)) { u.x -= dir * u.spd * dt; continue; }
       if (dist <= rangeWith(u.d, null)) { if (u.cdT <= 0) { u.cdT = u.d.cd; tg.hp -= computeDamage(u.d, null, { kind: 'unit', def: tg.d, up: null }) * (0.9 + R() * 0.2); tg.lastHit = t; } }
       else u.x += dir * u.spd * dt;
-      if (u.d.regen && t - (u.lastHit ?? -9) > 5) u.hp = Math.min(u.d.hp, u.hp + u.d.regen * dt);
+      if (u.d.regen && t - (u.lastHit ?? -9) > 5) u.hp = Math.min(u.maxHp, u.hp + u.d.regen * dt);
     }
   }
   const sa = all.filter(u => u.side === 0 && u.hp > 0), sb = all.filter(u => u.side === 1 && u.hp > 0);

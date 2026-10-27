@@ -27,5 +27,6 @@ Debug : `?diff=normal`, `?speed=10`, `?nofog`.
 ## Équilibrage et tests
 - `rules.js` : formule de dégâts, portée et recul (kiting) partagés par le jeu et l'outil de duel.
 - `node tools/duel.mjs [budget] [essais]` : matrice des duels à coût égal (sans navigateur).
-- `npm test` : échoue si une unité bat toutes les autres à coût égal (budgets 300/600/1200).
+- `npm test` : duels à budget égal (à 1 % près, dernière unité au prorata), contres francs assumés. Vérifie : moyenne de chaque unité 35–65 %, ≤ 20/30 duels à 0/100 %, ≥ 4/15 paires serrées, contres voulus ≥ 80 % à 600 et 1200, chaque unité a un duel gagné ≥ 80 % et un perdu ≤ 20 %, écart ≤ 35 points entre 600 et 1200.
+- Contres voulus : lancier > cavalier, héros · cavalier > archer, tirailleur · archer > épéiste, lancier · tirailleur > archer, lancier · épéiste > lancier, cavalier · héros > épéiste, cavalier.
 - Victoire alternative : la **Merveille** (âge impérial, 1000 de chaque ressource) fait gagner si elle tient 5 minutes.
