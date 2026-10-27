@@ -75,7 +75,7 @@ button:disabled{opacity:.4}
 @keyframes resLack{0%,40%,80%{background:#c02020;border-color:#ff6060}20%,60%,100%{background:rgba(40,25,10,.92)}}
 #panel .b.dis,#panel .card.dis{opacity:.4}
 #panel.empty{display:none}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sr{position:absolute;top:0;left:0;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 #help .x{display:none}
 #panel .mrow{justify-content:flex-start}#panel .ports{display:flex;gap:2px}#panel .ports .por{font-size:24px;padding:2px 6px}#panel .who{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}#panel .who small{opacity:.9}.hpb{display:block;height:6px;background:#3a1a10;border-radius:3px;overflow:hidden;max-width:220px}.hpb i{display:block;height:100%;background:#4ec040}
 @media (pointer:coarse),(max-width:760px){
@@ -110,6 +110,15 @@ button:disabled .i{filter:grayscale(1);opacity:.6}
 #end .sum{display:grid;grid-template-columns:auto auto;gap:4px 18px;font-size:17px;background:rgba(30,18,6,.9);border:1px solid #c9a35a;border-radius:10px;padding:12px 18px;margin:0 0 18px}
 #end .sum dt{opacity:.85}#end .sum dd{margin:0;font-weight:bold;text-align:right}
 #end .row2{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}#end button{min-height:48px}
+/* passe UI 5 : focus clavier visible, mouvement réduit */
+:focus{outline:none}
+:focus-visible,button:focus-visible,#mini:focus-visible,#panel .card:focus-visible{outline:3px solid #ffd890;outline-offset:2px;box-shadow:0 0 0 5px rgba(0,0,0,.75)}
+#tuto button:focus-visible,#helpBox button:focus-visible,#start button:focus-visible,#end button:focus-visible{outline:3px solid #ffd890;outline-offset:3px}
+@media (prefers-reduced-motion: reduce){
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+ .pill.up{animation:none}
+ .pill.lack{animation:none;background:#c02020;border-color:#ff6060}
+}
 </style>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head><body>
@@ -123,7 +132,7 @@ button:disabled .i{filter:grayscale(1);opacity:.6}
  <button data-act="idle" id="idleBtn" title="Villageois inactif (. ou I)" aria-label="Villageois inactif (. ou I)"><span class="ti">💤</span><span class="tl">Inactifs</span></button>
  <button data-act="desel" title="Tout désélectionner (Échap)" aria-label="Tout désélectionner (Échap)"><span class="ti">✖</span><span class="tl">Désél.</span></button>
 </div>
-<div id="panel" class="ui" role="region" aria-label="Sélection"></div><div id="live" class="sr" role="status" aria-live="polite"></div><div id="box"></div><div id="msg"></div>
+<div id="panel" class="ui" role="region" aria-label="Sélection"></div><div id="live" class="sr" role="status" aria-live="polite"></div><div id="box"></div><div id="msg" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="helpBox" class="modal" role="dialog" aria-modal="true" aria-labelledby="helpT"><div class="card"><button class="xbtn" data-close aria-label="Fermer l'aide">✕</button>
 <h2 id="helpT">❓ Aide</h2>
 <h3>🖱️ Sur ordinateur</h3><ul><li>Clic gauche / glisser : sélectionner (Maj = ajouter)</li><li>Clic droit : déplacer, récolter, attaquer, construire</li><li>F + clic : attaque-déplacement · Échap : annuler · X : arrêter</li><li>R : pivoter un bâtiment · H : hôtel de ville · « . » : villageois inactif</li><li>Ctrl+1..9 : créer un groupe · 1..9 : le sélectionner (2× = centrer)</li><li>WASD/ZQSD, flèches ou bords : caméra · molette : zoom</li></ul>
@@ -131,12 +140,12 @@ button:disabled .i{filter:grayscale(1);opacity:.6}
 <h3>🎯 But</h3><ul><li>Détruisez l'hôtel de ville ennemi, ou faites tenir une Merveille 5 minutes (âge impérial).</li><li>💤 Inactifs : nombre de villageois sans tâche ; touchez le bouton pour les retrouver.</li></ul>
 <div class="row2"><button id="tutoAgain">🎓 Revoir le tutoriel</button></div></div></div>
 <div id="tuto" role="dialog" aria-live="polite" aria-label="Tutoriel"></div>
-<canvas id="mini" width="160" height="160" role="img" aria-label="Minicarte : touchez pour déplacer la vue"></canvas>
+<canvas id="mini" width="160" height="160" tabindex="0" role="img" aria-label="Minicarte : touchez pour déplacer la vue (flèches pour déplacer la caméra)"></canvas>
 
-<div id="start"><h1>⚔ RTS Médiéval</h1><p>Détruisez l'hôtel de ville ennemi (rouge). Choisissez la difficulté :</p>
-<div class="row"><button data-diff="facile">Facile</button><button data-diff="normal">Normal</button><button data-diff="difficile">Difficile</button></div>
+<div id="start" role="dialog" aria-modal="true" aria-labelledby="startT" aria-describedby="startD"><h1 id="startT">⚔ RTS Médiéval</h1><p id="startD">Détruisez l'hôtel de ville ennemi (rouge). Choisissez la difficulté :</p>
+<div class="row" role="group" aria-label="Difficulté"><button data-diff="facile">Facile</button><button data-diff="normal">Normal</button><button data-diff="difficile">Difficile</button></div>
 <p><button id="loadBtn" style="display:none">📂 Reprendre la partie sauvegardée</button></p>
 <p class="small">Facile : vagues petites et tardives (~8 min) · Normal : 1re vague vers 5:30 · Difficile : IA plus rapide, qui reçoit un bonus de ressources</p></div>
-<div id="end" role="dialog" aria-labelledby="endTitle"><h1 id="endTitle"></h1><p id="endSub"></p><dl class="sum" id="endSum"></dl><div class="row2"><button id="replayBtn">🔁 Rejouer</button><button id="menuBtn">🏠 Menu</button></div></div>
+<div id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle"><h1 id="endTitle"></h1><p id="endSub"></p><dl class="sum" id="endSum"></dl><div class="row2"><button id="replayBtn">🔁 Rejouer</button><button id="menuBtn">🏠 Menu</button></div></div>
 <script type="module" src="./app.js"></script>
 </body></html>

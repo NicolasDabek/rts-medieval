@@ -10,15 +10,17 @@ import { ageLock, ageUp, canAge, canPay, canTech, canTrain, cmdBuild, cmdGather,
 import { buildingMesh, buildings, d2, extOf, free, resources, units, wallFree } from './world.js';
 
 export let msgT;
- export function msg(t, ms = 2500) { $('msg').textContent = t; clearTimeout(msgT); msgT = setTimeout(() => $('msg').textContent = '', ms); }
+ // #msg est une zone aria-live polie ; on évite la double annonce si le même texte vient de passer par announce()
+let lastAnn = { t: '', at: 0 };
+export function msg(t, ms = 2500) { const m = $('msg'); m.setAttribute('aria-live', lastAnn.t === t && performance.now() - lastAnn.at < 3000 ? 'off' : 'polite'); m.textContent = t; clearTimeout(msgT); msgT = setTimeout(() => m.textContent = '', ms); }
 st.rallyMode = false; st.selBuilding = null; export let placing = null; st.atkMode = false; export let boxMode = false; export let gameOver = false; st.gameTime = 0;
 export const selUnits = () => units.filter(u => u.selected);
 export function setSel(list, add = false) { if (!add) units.forEach(u => u.selected = false); list.forEach(u => u.selected = true); st.selBuilding = null; }
 // annonces pour lecteurs d'écran (région aria-live)
 const ann = { wave: 0, soon: null, idle: 0, idleT: -1e9 };
-export function announce(t) { const l = $('live'); if (!l) return; l.textContent = ''; setTimeout(() => l.textContent = t, 50); }
+export function announce(t) { const l = $('live'); if (!l || $('msg')?.textContent === t) return; lastAnn = { t, at: performance.now() }; l.textContent = ''; setTimeout(() => l.textContent = t, 50); }
 // clignotement rouge des ressources manquantes
-export function flashLack(cost) { const r = teams[0].res; for (const k of Object.keys(cost || {})) if (r[k] < cost[k]) { const p = $(k)?.parentElement; if (p) { p.classList.remove('lack'); void p.offsetWidth; p.classList.add('lack'); } } }
+export function flashLack(cost) { const r = teams[0].res; for (const k of Object.keys(cost || {})) if (r[k] < cost[k]) { const p = $(k)?.parentElement; if (p) { p.classList.remove('lack'); void p.offsetWidth; p.classList.add('lack'); clearTimeout(p._lackT); p._lackT = setTimeout(() => p.classList.remove('lack'), 900); } } }
 export function updateHUD() {
   const r = teams[0].res; for (const k of RES) { const v = Math.floor(r[k]), el = $(k); if (el.textContent === String(v)) continue;
     const pill = el.parentElement; if (+el.textContent < v && st.started) { pill.classList.remove('up'); void pill.offsetWidth; pill.classList.add('up'); }

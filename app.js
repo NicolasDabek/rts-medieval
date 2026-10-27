@@ -8,7 +8,7 @@ const saved = () => localStorage.getItem(KEY);
 
 // boutons du HUD : son, sauvegarde, chargement
 $('extra').innerHTML = '<button data-act="mute" id="muteBtn" title="Son" aria-label="Son">🔊</button><button data-act="save" title="Sauvegarder" aria-label="Sauvegarder">💾</button><button data-act="load" title="Charger" aria-label="Charger">📂</button>';
-const muteIcon = () => $('muteBtn').textContent = audio.isMuted() ? '🔇' : '🔊'; muteIcon();
+const muteIcon = () => { const b = $('muteBtn'), m = audio.isMuted(); b.textContent = m ? '🔇' : '🔊'; b.setAttribute('aria-label', 'Couper le son'); b.setAttribute('aria-pressed', String(m)); b.title = m ? 'Son coupé (cliquer pour réactiver)' : 'Couper le son'; }; muteIcon();
 $('extra').addEventListener('click', e => { const a = e.target.closest('button')?.dataset.act; if (a) game.doAct(a); });
 extraActs.mute = () => { audio.unlock(); const m = audio.toggleMute(); muteIcon(); game.msg(m ? 'Son coupé' : 'Son activé'); };
 extraActs.save = () => {
@@ -61,3 +61,19 @@ tuto.addEventListener('click', e => { const t = e.target.closest('button')?.data
 $('tutoAgain').addEventListener('click', startTuto);
 game.startTuto = startTuto;
 if (!localStorage.getItem(TUTO_KEY) && !loaded) { const iv = setInterval(() => { if (game.started) { clearInterval(iv); if (!new URLSearchParams(location.search).has('diff')) startTuto(); } }, 300); }
+
+// ===== Accessibilité clavier des dialogues : focus initial, piège Tab / Maj+Tab, restauration du focus =====
+const FOCUSABLE = 'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+const shown = el => el && getComputedStyle(el).display !== 'none' && (!el.classList.contains('modal') || el.classList.contains('on'));
+function trap(el) { el.addEventListener('keydown', e => { if (e.key !== 'Tab') return; const f = [...el.querySelectorAll(FOCUSABLE)].filter(x => x.offsetParent !== null); if (!f.length) return; const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && (document.activeElement === first || !el.contains(document.activeElement))) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && (document.activeElement === last || !el.contains(document.activeElement))) { e.preventDefault(); first.focus(); } }); }
+let lastOutside = null; document.addEventListener('focusin', e => { if (!e.target.closest('#start,#helpBox,#end')) lastOutside = e.target; });
+function watchDialog(el, initial) { let prev = null, was = false; trap(el);
+  const check = () => { const on = shown(el); if (on && !was) { prev = lastOutside; (initial() || el.querySelector(FOCUSABLE))?.focus(); } else if (!on && was) { const back = prev && prev !== document.body && document.contains(prev) && prev.offsetParent !== null ? prev : game.renderer.domElement; back.focus({ preventScroll: true }); } was = on; };
+  new MutationObserver(check).observe(el, { attributes: true, attributeFilter: ['style', 'class'] }); check(); }
+game.renderer.domElement.setAttribute('tabindex', '-1'); game.renderer.domElement.setAttribute('aria-label', 'Vue du jeu');
+watchDialog($('start'), () => $('loadBtn').style.display !== 'none' ? null : document.querySelector('#start [data-diff="normal"]'));
+watchDialog($('helpBox'), () => helpBox.querySelector('.xbtn'));
+watchDialog($('end'), () => $('replayBtn'));
+// garde le focus dans le dialogue modal ouvert si on clique/tabule ailleurs
+document.addEventListener('focusin', e => { for (const d of [$('start'), helpBox, $('end')]) if (shown(d) && !d.contains(e.target)) { d.querySelector(FOCUSABLE)?.focus(); break; } });
