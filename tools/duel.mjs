@@ -3,6 +3,8 @@
 import { UNIT } from '../data.js';
 import { computeDamage, rangeWith, shouldKite, costOf } from '../rules.js';
 
+// presets d'améliorations (même valeur pour les deux camps), agrégés comme units.js
+export const UPS = { none: null, age3: { atk: 2, arm: 2, projAtk: 0, range: 2 }, max: { atk: 4, arm: 4, projAtk: 1, range: 2 } };
 export const ROSTER = ['epeiste', 'lancier', 'tirailleur', 'archer', 'cavalier', 'heros'];
 const BODY = 0.6; // demi-largeur d'une unité : la portée se compte bord à bord
 
@@ -11,7 +13,8 @@ function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let
 
 // Combat N contre N sur une ligne : déplacement vers l'ennemi le plus proche, tir quand à portée, recul (kiting) selon rules.js
 export const spent = (type, budget) => { const c = costOf(UNIT[type]), n = Math.floor(budget / c), f = budget / c - n; return c * (n + (f > 0.01 ? f : 0)); };
-export function fight(a, b, budget = 600, seed = 1, maxT = 180) {
+export function fight(a, b, budget = 600, seed = 1, maxT = 180, up = null) {
+  if (typeof up === 'string') up = UPS[up];
   // le héros est unique en jeu : testé seul (1 héros) contre le même coût d'adversaires
   if (a === 'heros' || b === 'heros') budget = costOf(UNIT.heros);
   // n = floor(budget/coût) unités entières + une dernière unité dont les PV sont réduits au prorata du budget restant :
@@ -30,7 +33,7 @@ export function fight(a, b, budget = 600, seed = 1, maxT = 180) {
       if (!tg) continue;
       const dist = Math.max(0, bd - 2 * BODY), dir = Math.sign(tg.x - u.x) || 1;
       if (shouldKite(u.d, tg.d, dist, u.cdT)) { u.x -= dir * u.spd * dt; continue; }
-      if (dist <= rangeWith(u.d, null)) { if (u.cdT <= 0) { u.cdT = u.d.cd; tg.hp -= computeDamage(u.d, null, { kind: 'unit', def: tg.d, up: null }) * (0.9 + R() * 0.2); tg.lastHit = t; } }
+      if (dist <= rangeWith(u.d, up)) { if (u.cdT <= 0) { u.cdT = u.d.cd; tg.hp -= computeDamage(u.d, up, { kind: 'unit', def: tg.d, up }) * (0.9 + R() * 0.2); tg.lastHit = t; } }
       else u.x += dir * u.spd * dt;
       if (u.d.regen && t - (u.lastHit ?? -9) > 5) u.hp = Math.min(u.maxHp, u.hp + u.d.regen * dt);
     }
@@ -40,17 +43,17 @@ export function fight(a, b, budget = 600, seed = 1, maxT = 180) {
 }
 
 // matrice : taux de victoire de la ligne contre la colonne
-export function matrix(budget = 600, trials = 20, roster = ROSTER) {
+export function matrix(budget = 600, trials = 20, roster = ROSTER, up = null, seedOff = 0) {
   const M = {};
-  for (const a of roster) { M[a] = {}; for (const b of roster) { if (a === b) { M[a][b] = null; continue; } let w = 0; for (let s = 1; s <= trials; s++) { const r = fight(a, b, budget, s * 7919 + a.length * 31 + b.length); w += r.win === 0 ? 1 : r.win === -1 ? 0.5 : 0; } M[a][b] = w / trials; } }
+  for (const a of roster) { M[a] = {}; for (const b of roster) { if (a === b) { M[a][b] = null; continue; } let w = 0; for (let s = 1; s <= trials; s++) { const r = fight(a, b, budget, s * 7919 + a.length * 31 + b.length + seedOff, 180, up); w += r.win === 0 ? 1 : r.win === -1 ? 0.5 : 0; } M[a][b] = w / trials; } }
   return M;
 }
 export const dominant = M => Object.keys(M).filter(a => Object.keys(M[a]).every(b => a === b || M[a][b] > 0.5));
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const budget = +process.argv[2] || 600, trials = +process.argv[3] || 20, M = matrix(budget, trials);
+  const budget = +process.argv[2] || 600, trials = +process.argv[3] || 20, upN = process.argv[4] || 'none', M = matrix(budget, trials, ROSTER, upN);
   const pad = s => String(s).padEnd(11);
-  console.log(`Taux de victoire ligne vs colonne, coût égal (${budget} ressources/camp, ${trials} essais)`);
+  console.log(`Taux de victoire ligne vs colonne, coût égal (${budget} ressources/camp, ${trials} essais, améliorations ${upN})`);
   console.log(pad('') + ROSTER.map(pad).join(''));
   for (const a of ROSTER) console.log(pad(a) + ROSTER.map(b => pad(M[a][b] === null ? '—' : Math.round(M[a][b] * 100) + '%')).join(''));
   const d = dominant(M); console.log(d.length ? 'DOMINANT : ' + d.join(', ') : 'Aucune unité ne bat toutes les autres.');

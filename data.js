@@ -14,13 +14,13 @@ export const AGES = [
 export const UNIT = {
   villageois: { label: 'Villageois', icon: '👷', cls: 'villager', hp: 25, atk: 3, range: 1.2, cd: 1.5, speed: 5.5, am: 0, ap: 0, cost: { nourriture: 50 }, time: 7, aggro: 0, b: 'hdv', age: 0 },
   epeiste: { label: 'Épéiste', icon: '🗡️', cls: 'inf', hp: 60, atk: 7, range: 1.3, cd: 1, speed: 5, am: 1, ap: 1, cost: { nourriture: 60, or: 20 }, time: 9, aggro: 11, b: 'caserne', age: 0, bonus: { building: 4, inf: 2 }, desc: 'Infanterie polyvalente, bonne contre les bâtiments. Bat : lanciers, cavaliers. Craint : archers, héros' },
-  lancier: { label: 'Lancier', icon: '🔱', cls: 'inf', hp: 50, atk: 5, range: 1.6, cd: 1, speed: 5.2, am: 0, ap: 0, cost: { nourriture: 35, bois: 25 }, time: 7, aggro: 11, b: 'caserne', age: 1, bonus: { cav: 5, hero: 6 }, desc: 'Anti-cavalerie. Bat : cavaliers, héros. Craint : archers, tirailleurs, épéistes' },
+  lancier: { label: 'Lancier', icon: '🔱', cls: 'inf', hp: 46, atk: 5, range: 1.6, cd: 1, speed: 5.2, am: 0, ap: 0, cost: { nourriture: 35, bois: 25 }, time: 7, aggro: 11, b: 'caserne', age: 1, bonus: { cav: 5, hero: 6 }, desc: 'Anti-cavalerie. Bat : cavaliers, héros. Craint : archers, tirailleurs, épéistes' },
   archer: { label: 'Archer', icon: '🏹', cls: 'arch', hp: 40, atk: 6, range: 10, cd: 1.6, speed: 5.8, am: 0, ap: 0, cost: { bois: 25, or: 40 }, time: 8, aggro: 12, b: 'archerie', age: 1, bonus: { inf: 1 }, kite: true, proj: 'arrow', desc: 'Tir à distance (inefficace contre les bâtiments). Bat : épéistes, lanciers. Craint : cavaliers, tirailleurs' },
-  tirailleur: { label: 'Tirailleur', icon: '🎯', cls: 'skirm', hp: 50, atk: 5, range: 5, cd: 1.6, speed: 5.0, am: 1, ap: 4, cost: { nourriture: 35, bois: 30 }, time: 8, aggro: 11, b: 'caserne', age: 1, bonus: { arch: 4, cav: 3 }, kite: true, proj: 'arrow', desc: 'Javelots, bouclier : résiste aux flèches. Bat : archers, lanciers. Craint : cavaliers' },
-  cavalier: { label: 'Cavalier', icon: '🐎', cls: 'cav', hp: 100, atk: 8, range: 1.5, cd: 1.2, speed: 8, am: 2, ap: 2, cost: { nourriture: 70, or: 60 }, time: 11, aggro: 13, b: 'ecurie', age: 1, bonus: { arch: 4, skirm: 3, siege: 10 }, radius: 0.75, desc: 'Rapide, écrase les engins de siège. Bat : archers, tirailleurs. Craint : lanciers, épéistes, héros' },
+  tirailleur: { label: 'Tirailleur', icon: '🎯', cls: 'skirm', hp: 50, atk: 5, range: 5, cd: 1.6, speed: 5.0, am: 1, ap: 4, cost: { nourriture: 35, bois: 30 }, time: 8, aggro: 11, b: 'caserne', age: 1, bonus: { arch: 4, cav: 3 }, kite: true, proj: 'arrow', desc: 'Javelots, bouclier : résiste aux flèches. Bat : archers, lanciers. Craint : cavaliers, héros' },
+  cavalier: { label: 'Cavalier', icon: '🐎', cls: 'cav', hp: 100, atk: 8, range: 1.5, cd: 1.2, speed: 8, am: 2, ap: 2, cost: { nourriture: 70, or: 60 }, time: 11, aggro: 13, b: 'ecurie', age: 1, bonus: { arch: 4, skirm: 4, siege: 10 }, radius: 0.75, desc: 'Rapide, écrase les engins de siège. Bat : archers, tirailleurs. Craint : lanciers, épéistes, héros' },
   belier: { label: 'Bélier', icon: '🐏', cls: 'siege', hp: 180, atk: 2, range: 2, cd: 2.5, speed: 3.2, am: 0, ap: 25, cost: { bois: 160, or: 75 }, time: 16, aggro: 14, siegeOnly: true, b: 'atelier', age: 2, bonus: { building: 60 }, radius: 0.95, desc: 'Détruit les bâtiments, insensible aux flèches' },
   catapulte: { label: 'Catapulte', icon: '☄️', cls: 'siege', hp: 80, atk: 14, range: 15, cd: 3.2, speed: 3, am: 0, ap: 4, cost: { bois: 200, or: 150 }, time: 18, aggro: 16, b: 'atelier', age: 2, bonus: { building: 45 }, proj: 'stone', splash: 2.2, radius: 0.95, desc: 'Longue portée, dégâts de zone' },
-  heros: { label: 'Héros (Roland)', icon: '👑', cls: 'hero', hp: 360, atk: 13, range: 1.6, cd: 1, speed: 6.5, am: 3, ap: 1, cost: { nourriture: 200, or: 200 }, time: 20, aggro: 13, b: 'hdv', age: 2, limit: 1, regen: 0.5, desc: 'Unique, se soigne hors combat. Bat : épéistes, cavaliers. Craint : lanciers' },
+  heros: { label: 'Héros (Roland)', icon: '👑', cls: 'hero', hp: 360, atk: 13, range: 1.6, cd: 1, speed: 6.5, am: 3, ap: 1, cost: { nourriture: 200, or: 200 }, time: 20, aggro: 13, b: 'hdv', age: 2, limit: 1, regen: 0.5, bonus: { cav: 2 }, desc: 'Unique, se soigne hors combat. Bat : épéistes, cavaliers. Craint : lanciers' },
 };
 
 export const BUILD = {
@@ -57,7 +57,7 @@ export const TECHS = {
   armure3: { label: 'Armure complète', icon: '🛡️', b: 'forge', age: 3, req: 'armure2', cost: { nourriture: 300, or: 250 }, time: 30, desc: 'Armure des soldats +2' },
   maconnerie: { label: 'Maçonnerie', icon: '🧱', b: 'universite', age: 2, cost: { bois: 175, pierre: 150 }, time: 25, desc: 'Bâtiments +20 % PV' },
   balistique: { label: 'Balistique', icon: '🎯', b: 'universite', age: 2, cost: { bois: 300, or: 175 }, time: 30, desc: 'Archers et tours : portée +2' },
-  chimie: { label: 'Chimie', icon: '⚗️', b: 'universite', age: 3, cost: { nourriture: 300, or: 200 }, time: 30, desc: 'Projectiles : attaque +1' },
+  chimie: { label: 'Chimie', icon: '⚗️', b: 'universite', age: 3, cost: { nourriture: 300, or: 200 }, time: 30, desc: 'Archers et tours : attaque +1' },
   conscription: { label: 'Conscription', icon: '📯', b: 'caserne', age: 3, cost: { nourriture: 400, or: 200 }, time: 30, desc: 'Formation des soldats 25 % plus rapide' },
 };
 
