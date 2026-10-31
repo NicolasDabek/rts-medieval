@@ -29,7 +29,7 @@ button:disabled{opacity:.4}
 #mini{position:fixed;right:8px;bottom:58px;width:170px;height:170px;border:2px solid #c9a35a;z-index:5;touch-action:none;image-rendering:pixelated}
 #end{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:10}
 #start{position:fixed;inset:0;background:rgba(20,12,4,.92);display:none;flex-direction:column;align-items:center;justify-content:center;color:#f3e2b3;z-index:11;text-align:center;padding:20px}
-#start .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}#start button{font-size:22px;padding:14px 26px;min-width:140px}#start .small{font-size:14px;color:#d8c9a3;max-width:520px}#start h1,#end h1{font-size:48px;margin:0 0 20px}
+#start .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}#start button{font-size:22px;padding:14px 26px;min-width:140px}#start .small{font-size:14px;color:#d8c9a3;max-width:520px}#start h1,#end h2{font-size:48px;margin:0 0 20px}
 #end button{font-size:22px;padding:12px 30px}
 @media (pointer:coarse),(max-width:760px){
  #hud{font-size:13px;gap:2px 12px}
@@ -124,6 +124,11 @@ button:disabled .i{filter:grayscale(1);opacity:.6}
  #start .row{flex-wrap:nowrap;width:min(100%,420px);gap:8px}
  #start .row button{flex:1;min-width:0;font-size:16px;padding:12px 6px}
 }
+/* passe UI 7 */
+#start [data-diff="normal"]{font-size:18px;line-height:1.15}
+@media (pointer:coarse),(max-width:760px){
+ #start [data-diff="normal"]{font-size:14px}
+}
 </style>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head><body>
@@ -148,9 +153,9 @@ button:disabled .i{filter:grayscale(1);opacity:.6}
 <canvas id="mini" width="160" height="160" tabindex="0" role="img" aria-label="Minicarte : touchez pour déplacer la vue (flèches pour déplacer la caméra)"></canvas>
 
 <div id="start" role="dialog" aria-modal="true" aria-labelledby="startT" aria-describedby="startD"><h1 id="startT">⚔ RTS Médiéval</h1><p id="startD">Détruisez l'hôtel de ville ennemi (rouge). Choisissez la difficulté :</p>
-<div class="row" role="group" aria-label="Difficulté"><button data-diff="facile">Facile</button><button data-diff="normal">Normal</button><button data-diff="difficile">Difficile</button></div>
+<div class="row" role="group" aria-label="Difficulté"><button data-diff="facile">Facile</button><button data-diff="normal" aria-pressed="true" aria-describedby="diffNormalHint">Normal · recommandé</button><button data-diff="difficile">Difficile</button></div><p id="diffNormalHint" class="sr">Niveau recommandé pour une première partie.</p>
 <p><button id="loadBtn" style="display:none">📂 Reprendre la partie sauvegardée</button></p>
 <p class="small">Facile : vagues petites et tardives (~8 min) · Normal : 1re vague vers 5:30 · Difficile : IA plus rapide, qui reçoit un bonus de ressources</p></div>
-<div id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle"><h1 id="endTitle"></h1><p id="endSub"></p><dl class="sum" id="endSum"></dl><div class="row2"><button id="replayBtn">🔁 Rejouer</button><button id="menuBtn">🏠 Menu</button></div></div>
+<div id="end" role="dialog" aria-modal="true" aria-labelledby="endTitle"><h2 id="endTitle"></h2><p id="endSub"></p><dl class="sum" id="endSum"></dl><div class="row2"><button id="replayBtn">🔁 Rejouer</button><button id="menuBtn">🏠 Menu</button></div></div>
 <script type="module" src="./app.js"></script>
 </body></html>
