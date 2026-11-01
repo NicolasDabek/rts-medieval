@@ -79,12 +79,12 @@ export function mobilePanel(sel) {
   const title = Object.entries(c).map(([t, n]) => `${n} ${UNIT[t].label.toLowerCase()}${n > 1 && !t.endsWith('s') ? 's' : ''}`).join(', ') + (sel.length > 1 ? ' sélectionnés' : ' sélectionné');
   const g = {}; vills.forEach(u => { const t = u.cmd?.type === 'gather' && u.cmd.res ? resTypeOf(u.cmd.res) : u.cmd?.type === 'build' ? 'construction' : null; if (t) g[t] = (g[t] || 0) + 1; });
   const job = Object.entries(g).sort((a, b) => b[1] - a[1])[0];
-  const right = job ? (job[0] === 'construction' ? 'Construction' : 'Récolte : ' + RES_LABEL[job[0]].toLowerCase()) : sel.length === 1 ? `PV ${Math.ceil(sel[0].hp)}/${sel[0].maxHp}` : '';
+  const right = job ? (job[0] === 'construction' ? 'Construction' : 'Récolte : ' + RES_LABEL[job[0]].toLowerCase()) : sel.length === 1 ? `PV ${Math.ceil(sel[0].hp)}/${Math.ceil(sel[0].maxHp)}` : '';
   const acts = vills.length ? act('gatherauto', '🪓', 'Récolter', true) + act('sheet', '🏠', 'Construire') + act('atk', '⚔', 'Attaquer') + act('desel', '✖', 'Annuler')
     : act('atk', '⚔', 'Attaquer', true) + act('stop', '⏹', 'Arrêter') + act('army', '🛡', 'Armée') + act('desel', '✖', 'Annuler');
   const hp = sel.reduce((a, u) => a + u.hp, 0), mhp = sel.reduce((a, u) => a + u.maxHp, 0), pct = Math.round(100 * hp / mhp);
   const por = Object.keys(c).slice(0, 3).map(t => `<span class="por big" aria-hidden="true">${UNIT[t].icon}</span>`).join('');
-  return `<div class="row mrow"><span class="ports">${por}</span><span class="who"><b>${esc(title)}</b><span class="hpb" role="img" aria-label="PV ${Math.ceil(hp)} sur ${mhp}"><i style="width:${pct}%"></i></span><small>PV ${Math.ceil(hp)}/${mhp}${right && !right.startsWith('PV') ? ' · ' + right : ''}</small></span></div><div class="acts">${acts}</div>`;
+  return `<div class="row mrow"><span class="ports">${por}</span><span class="who"><b>${esc(title)}</b><span class="hpb" role="img" aria-label="PV ${Math.ceil(hp)} sur ${Math.ceil(mhp)}"><i style="width:${pct}%"></i></span><small>PV ${Math.ceil(hp)}/${Math.ceil(mhp)}${right && !right.startsWith('PV') ? ' · ' + right : ''}</small></span></div><div class="acts">${acts}</div>`;
 }
 export function renderPanel() {
   let h = ''; const sel = selUnits();
@@ -96,7 +96,7 @@ export function renderPanel() {
       + (d.wall ? '' : bt('rotate', '↻', 'Pivoter' + (isTouch ? '' : ' (R)'), '', null)) + bt('desel', '✖', 'Annuler', '', null);
   } else if (st.selBuilding) {
     const b = st.selBuilding, S = b.def;
-    h = `<div class="hd"><span class="por big">${S.icon}</span> <b>${esc(S.label)}${b.team ? ' (ennemi)' : ''}</b> — PV ${Math.ceil(b.hp)}/${b.maxHp}${S.farm && b.done ? ` — 🍖 ${b.amount}` : ''}</div>`;
+    h = `<div class="hd"><span class="por big">${S.icon}</span> <b>${esc(S.label)}${b.team ? ' (ennemi)' : ''}</b> — PV ${Math.ceil(b.hp)}/${Math.ceil(b.maxHp)}${S.farm && b.done ? ` — 🍖 ${b.amount}` : ''}</div>`;
     if (b.team === 0) {
       if (!b.done) h += `<div>Construction : ${Math.floor(b.progress * 100)} % (envoyez des villageois)</div>` + bt('cancelb', '✖', 'Annuler', 'remboursé', null);
       else {
@@ -113,7 +113,7 @@ export function renderPanel() {
   } else if (sel.length) {
     const c = {}; sel.forEach(u => c[u.type] = (c[u.type] || 0) + 1);
     h = '<div class="hd">' + Object.entries(c).map(([t, n]) => `<button class="por" data-act="only:${t}" title="${esc(UNIT[t].label)}">${UNIT[t].icon}<sub>${n}</sub></button>`).join('');
-    if (sel.length === 1) { const u = sel[0]; h += ` <b>${esc(u.def.label)}</b> — PV ${Math.ceil(u.hp)}/${u.maxHp} · ⚔${u.def.atk + (u.def.cls !== 'villager' && u.def.cls !== 'siege' ? teams[0].up.atk : 0)} 🛡${u.def.am}/${u.def.ap}`; if (u.carry) h += ` · ${RES_ICON[u.carryType]} ${u.carry}`; }
+    if (sel.length === 1) { const u = sel[0]; h += ` <b>${esc(u.def.label)}</b> — PV ${Math.ceil(u.hp)}/${Math.ceil(u.maxHp)} · ⚔${u.def.atk + (u.def.cls !== 'villager' && u.def.cls !== 'siege' ? teams[0].up.atk : 0)} 🛡${u.def.am}/${u.def.ap}`; if (u.carry) h += ` · ${RES_ICON[u.carryType]} ${u.carry}`; }
     h += '</div>' + bt('stop', '⏹', 'Arrêter' + (isTouch ? '' : ' (X)'), '', null);
     // bâtiments groupés par catégorie ; ceux de plus d'un âge d'avance sont masqués
     if (c.villageois) for (const [cat, keys] of BUILD_CATS) {
