@@ -1,6 +1,6 @@
 // Test d'équilibrage à coût égal (duels avec hasard, budgets dépensés à <1 % près).
 // Les contres restent francs (choix de conception) ; on vérifie donc :
-// - moyenne de chaque unité : 35–65 % à 300 ; 42–58 % à 600 et 1200 sans amélioration ; 40–60 % aux presets âge 3 et max
+// - moyenne de chaque unité : 35–65 % à 300 ; 42–58 % à 600 et 1200, aux trois presets (sans amélioration, âge 3, max)
 //   (moyennes comparées arrondies au point de % près, comme affichées) ; aucune unité ne bat toutes les autres
 // - au plus 15 duels sur 30 à 0/100 % à 600 et 1200 sans amélioration (300 : 24)
 // - paires serrées (20–80 %) : au moins 2 sur 15 à 600, au moins 1 à 1200 (300 : 2)
@@ -14,8 +14,8 @@
 // Paires serrées : choix de Nicolas (passe GD 9, option A) d'accepter 2/15. 12 des 15 paires sont des contres
 // voulus à ≥ 85 %, donc hors zone serrée ; seules épéiste–tirailleur, tirailleur–héros et archer–héros peuvent l'être.
 // Épéiste–tirailleur oscille autour de 80 % : à 1200 (graines+0) elle sort de la zone, d'où le minimum à 1 à 1200.
-// Archer aux presets âge 3 / max : 59–60 % (limite structurelle : il gagne ses 3 duels à ~100 % une fois amélioré,
-// le passer sous 58 % exigerait d'inverser archer–héros sans amélioration).
+// Passe GD 10 : Balistique et Chimie ne concernent plus que les tours et l'hôtel de ville ; l'archer retombe à 57 %
+// aux presets âge 3 / max (avant : 59–60 %), d'où la cible 42–58 % resserrée pour tous les presets.
 import { UNIT } from '../data.js';
 import { matrix, dominant, ROSTER, spent, UPS, escortRow, ESCORT } from '../tools/duel.mjs';
 export const COUNTERS = { lancier: ['cavalier', 'heros'], cavalier: ['archer', 'tirailleur'], archer: ['epeiste', 'lancier'], tirailleur: ['archer', 'lancier'], epeiste: ['lancier', 'cavalier'], heros: ['epeiste', 'cavalier'] };
@@ -49,7 +49,7 @@ for (const budget of BUDGETS) {
   }
   if (budget >= 600) for (const up of Object.keys(UPS)) { const Mu = up === 'none' ? M : matrix(budget, TRIALS, ROSTER, up, off); byUp[`${off} ${up} ${budget}`] = Mu;
     if (up !== 'none') { const av = ROSTER.map(a => ROSTER.filter(b => b !== a).reduce((s, b) => s + Mu[a][b], 0) / 5);
-      ROSTER.forEach((a, i) => { if (pct(av[i]) < 40 || pct(av[i]) > 60) errors.push(`${tag} (${up}): moyenne ${a} ${pct(av[i])} % (cible 40–60)`); });
+      ROSTER.forEach((a, i) => { if (pct(av[i]) < 42 || pct(av[i]) > 58) errors.push(`${tag} (${up}): moyenne ${a} ${pct(av[i])} % (cible 42–58)`); });
       console.log(`${tag} (${up}) · moyennes ${ROSTER.map((a, i) => a + ' ' + pct(av[i]) + '%').join(', ')}`); }
     for (const [a, ts] of Object.entries(COUNTERS)) for (const b of ts) if (Mu[a][b] < 0.85) errors.push(`${tag} (${up}): contre ${a} > ${b} seulement ${pct(Mu[a][b])} %`); }
   console.log(`${tag} · moyennes ${ROSTER.map(a => a + ' ' + pct(avg[a]) + '%').join(', ')} · paires serrées ${close}/15 · 0/100 % : ${extreme}/30`);

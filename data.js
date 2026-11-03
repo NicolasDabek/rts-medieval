@@ -56,8 +56,8 @@ export const TECHS = {
   forge3: { label: 'Haut fourneau', icon: '🔥', b: 'forge', age: 3, req: 'forge2', cost: { nourriture: 300, or: 220 }, time: 30, desc: 'Attaque des soldats +2' },
   armure3: { label: 'Armure complète', icon: '🛡️', b: 'forge', age: 3, req: 'armure2', cost: { nourriture: 300, or: 250 }, time: 30, desc: 'Armure des soldats +2' },
   maconnerie: { label: 'Maçonnerie', icon: '🧱', b: 'universite', age: 2, cost: { bois: 175, pierre: 150 }, time: 25, desc: 'Bâtiments +20 % PV' },
-  balistique: { label: 'Balistique', icon: '🎯', b: 'universite', age: 2, cost: { bois: 300, or: 175 }, time: 30, desc: 'Archers et tours : portée +2' },
-  chimie: { label: 'Chimie', icon: '⚗️', b: 'universite', age: 3, cost: { nourriture: 300, or: 200 }, time: 30, desc: 'Archers et tours : attaque +1' },
+  balistique: { label: 'Balistique', icon: '🎯', b: 'universite', age: 2, cost: { bois: 200, or: 100 }, time: 30, desc: 'Tours et hôtels de ville : portée +2' },
+  chimie: { label: 'Chimie', icon: '⚗️', b: 'universite', age: 3, cost: { nourriture: 200, or: 150 }, time: 30, desc: 'Tours et hôtels de ville : attaque +1' },
   conscription: { label: 'Conscription', icon: '📯', b: 'caserne', age: 3, cost: { nourriture: 400, or: 200 }, time: 30, desc: 'Formation des soldats 25 % plus rapide' },
 };
 
