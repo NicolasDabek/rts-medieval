@@ -20,7 +20,7 @@ export const UNIT = {
   cavalier: { label: 'Cavalier', icon: '🐎', cls: 'cav', hp: 110, atk: 8, range: 1.5, cd: 1.2, speed: 8, am: 2, ap: 2, cost: { nourriture: 70, or: 60 }, time: 11, aggro: 13, b: 'ecurie', age: 1, bonus: { arch: 4, skirm: 4, siege: 10, inf: 0.8 }, radius: 0.75, desc: 'Rapide, écrase les engins de siège. Bat : archers, tirailleurs. Craint : lanciers, épéistes, héros' },
   belier: { label: 'Bélier', icon: '🐏', cls: 'siege', hp: 180, atk: 2, range: 2, cd: 2.5, speed: 3.2, am: 0, ap: 25, cost: { bois: 160, or: 75 }, time: 16, aggro: 14, siegeOnly: true, b: 'atelier', age: 2, bonus: { building: 60 }, radius: 0.95, desc: 'Détruit les bâtiments, insensible aux flèches' },
   catapulte: { label: 'Catapulte', icon: '☄️', cls: 'siege', hp: 80, atk: 14, range: 15, cd: 3.2, speed: 3, am: 0, ap: 4, cost: { bois: 200, or: 150 }, time: 18, aggro: 16, b: 'atelier', age: 2, bonus: { building: 45 }, proj: 'stone', splash: 2.2, radius: 0.95, desc: 'Longue portée, dégâts de zone' },
-  heros: { label: 'Héros (Roland)', icon: '👑', cls: 'hero', hp: 360, atk: 12, range: 1.6, cd: 1, speed: 6.5, am: 3, ap: 1, cost: { nourriture: 200, or: 200 }, time: 20, aggro: 13, b: 'hdv', age: 2, limit: 1, regen: 0.5, bonus: { cav: 2 }, desc: 'Unique, se soigne hors combat. Bat : épéistes, cavaliers. Craint : lanciers, archers' },
+  heros: { label: 'Héros (Roland)', icon: '👑', cls: 'hero', hp: 360, atk: 12, range: 1.6, cd: 1, speed: 6.5, am: 3, ap: 1, cost: { nourriture: 200, or: 200 }, time: 20, aggro: 13, b: 'hdv', age: 2, limit: 1, regen: 2, bonus: { cav: 2 }, desc: 'Unique, se soigne hors combat. Bat : épéistes, cavaliers. Craint : lanciers, archers' },
 };
 
 export const BUILD = {

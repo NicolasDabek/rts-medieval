@@ -104,9 +104,9 @@ export function formation(sel, p, type) {
 export const clsOf = t => t.kind === 'building' ? 'building' : t.def.cls;
 export function calcDmg(def, team, t) { return computeDamage(def, teams[team].up, { kind: t.kind, def: t.def, up: t.kind === 'unit' ? teams[t.team].up : null }); }
 export const rangeOf = (def, team) => rangeWith(def, teams[team].up);
-export function nearestEnemy(u, r, buildingsOnly = false) {
+export function nearestEnemy(u, r, buildingsOnly = false, skip = null) {
   let best = null, bd = r;
-  if (!buildingsOnly) for (const o of units) if (o.team !== u.team) { const d = d2(o.pos, u.pos) - o.radius; if (d < bd) { bd = d; best = o; } }
+  if (!buildingsOnly) for (const o of units) if (o.team !== u.team && !(skip && skip(o))) { const d = d2(o.pos, u.pos) - o.radius; if (d < bd) { bd = d; best = o; } }
   if (best) return best;
   for (const b of buildings) if (b.team !== u.team) { const d = edgeD(u.pos, b); if (d < bd) { bd = d; best = b; } }
   return best;
@@ -289,6 +289,6 @@ export function updateBuilding(b, dt) {
   }
   if (b.def.atk) {
     b.cdT -= dt;
-    if (b.cdT <= 0) { const t = nearestEnemy(b, rangeOf(b.def, b.team) + b.radius); if (t && t.kind === 'unit') { b.cdT = b.def.cd; shoot(b.pos.clone().setY(5), t.pos); hit(b, b.def, b.team, t); } }
+    if (b.cdT <= 0) { const t = nearestEnemy(b, rangeOf(b.def, b.team) + b.radius, false, o => o.def.ap >= 20); if (t && t.kind === 'unit') { b.cdT = b.def.cd; shoot(b.pos.clone().setY(5), t.pos); hit(b, b.def, b.team, t); } }
   }
 }

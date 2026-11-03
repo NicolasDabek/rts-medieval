@@ -27,12 +27,13 @@ export function aiDefend(src) {
 export const playerCls = c => units.filter(u => u.team === 0 && u.def.cls === c).length;
 export function aiPickUnit(b) {
   const opts = Object.keys(UNIT).filter(k => UNIT[k].b === b.type && k !== 'villageois' && k !== 'heros' && !canTrain(b, k)); if (!opts.length) return null;
-  // réponse proportionnelle : la part de chaque classe dans l'armée du joueur = la part des formations IA dédiées à son contre
-  const COUNTER = { cav: ['lancier', 'epeiste'], inf: ['archer', 'tirailleur'], arch: ['cavalier', 'tirailleur'], skirm: ['cavalier'], siege: ['cavalier'], hero: ['lancier'] };
-  const pc = ['cav', 'inf', 'arch', 'siege', 'hero'].map(c => [c, playerCls(c)]), tot = pc.reduce((s, x) => s + x[1], 0);
+  // réponse proportionnelle : la part de chaque type d'unité du joueur = la part des formations IA dédiées à son contre
+  // (contres tirés de la matrice de duels à coût égal, test/duel.test.mjs : ≥ 80 %)
+  const COUNTER = { epeiste: ['archer'], lancier: ['epeiste', 'archer', 'tirailleur'], archer: ['cavalier', 'tirailleur'], tirailleur: ['epeiste', 'cavalier'], cavalier: ['lancier', 'epeiste'], belier: ['cavalier', 'epeiste'], catapulte: ['cavalier'], heros: ['lancier', 'archer'] };
+  const pc = Object.keys(COUNTER).map(k => [k, units.filter(u => u.team === 0 && u.type === k).length]), tot = pc.reduce((s, x) => s + x[1], 0);
   if (tot >= 3 && Math.random() < 0.85) {
     let r = Math.random() * tot;
-    for (const [c, n] of pc) { if ((r -= n) < 0) { const ok = COUNTER[c].filter(k => opts.includes(k)); if (ok.length) return ok[Math.floor(Math.random() * ok.length)]; break; } }
+    for (const [k, n] of pc) { if ((r -= n) < 0) { const ok = COUNTER[k].filter(c => opts.includes(c)); if (ok.length) return ok[Math.floor(Math.random() * ok.length)]; break; } }
   }
   if (b.type === 'atelier' && units.filter(u => u.team === 1 && u.def.cls === 'siege').length >= 2 + teams[1].age) return null;
   return opts[Math.floor(Math.random() * opts.length)];
