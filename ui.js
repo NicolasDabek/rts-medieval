@@ -113,7 +113,7 @@ export function renderPanel() {
   } else if (sel.length) {
     const c = {}; sel.forEach(u => c[u.type] = (c[u.type] || 0) + 1);
     h = '<div class="hd">' + Object.entries(c).map(([t, n]) => `<button class="por" data-act="only:${t}" title="${esc(UNIT[t].label)}">${UNIT[t].icon}<sub>${n}</sub></button>`).join('');
-    if (sel.length === 1) { const u = sel[0]; h += ` <b>${esc(u.def.label)}</b> — PV ${Math.ceil(u.hp)}/${Math.ceil(u.maxHp)} · ⚔${u.def.atk + (u.def.cls !== 'villager' && u.def.cls !== 'siege' ? teams[0].up.atk : 0)} 🛡${u.def.am}/${u.def.ap}`; if (u.carry) h += ` · ${RES_ICON[u.carryType]} ${u.carry}`; }
+    if (sel.length === 1) { const u = sel[0]; h += ` <b>${esc(u.def.label)}</b> — PV ${Math.ceil(u.hp)}/${Math.ceil(u.maxHp)} · ⚔${Math.round(u.def.atk + (u.def.cls !== 'villager' && u.def.cls !== 'siege' ? teams[0].up.atk : 0))} 🛡${u.def.am}/${u.def.ap}`; if (u.carry) h += ` · ${RES_ICON[u.carryType]} ${u.carry}`; }
     h += '</div>' + bt('stop', '⏹', 'Arrêter' + (isTouch ? '' : ' (X)'), '', null);
     // bâtiments groupés par catégorie ; ceux de plus d'un âge d'avance sont masqués
     if (c.villageois) for (const [cat, keys] of BUILD_CATS) {

@@ -13,15 +13,17 @@ function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let
 
 // Combat N contre N sur une ligne : déplacement vers l'ennemi le plus proche, tir quand à portée, recul (kiting) selon rules.js
 export const spent = (type, budget) => { const c = costOf(UNIT[type]), n = Math.floor(budget / c), f = budget / c - n; return c * (n + (f > 0.01 ? f : 0)); };
+// a / b : type d'unité (budget commun) ou composition [[type, budget], …] (ex. héros + escorte, voir ESCORT)
 export function fight(a, b, budget = 600, seed = 1, maxT = 180, up = null) {
   if (typeof up === 'string') up = UPS[up];
   // le héros est unique en jeu : testé seul (1 héros) contre le même coût d'adversaires
   if (a === 'heros' || b === 'heros') budget = costOf(UNIT.heros);
   // n = floor(budget/coût) unités entières + une dernière unité dont les PV sont réduits au prorata du budget restant :
   // les deux camps dépensent exactement le même budget (écart < 1 %)
-  const R = rng(seed), mk = (type, side) => { const d = UNIT[type], c = costOf(d), n = Math.floor(budget / c), frac = budget / c - n, out = [];
+  const R = rng(seed), mkOne = (type, side, budget, out) => { const d = UNIT[type], c = costOf(d), n = Math.floor(budget / c), frac = budget / c - n;
     const add = f => { const hp = d.hp * f; out.push({ type, d, side, x: side ? 30 + R() * 3 + (R() * 2 - 1) : -R() * 3 + (R() * 2 - 1), hp, maxHp: hp, cdT: R() * d.cd, spd: d.speed * (0.95 + R() * 0.1) }); };
     for (let i = 0; i < n; i++) add(1); if (frac > 0.01) add(frac); return out; };
+  const mk = (army, side) => { const out = []; for (const [t, bu] of (typeof army === 'string' ? [[army, budget]] : army)) mkOne(t, side, bu, out); return out; };
   const all = [...mk(a, 0), ...mk(b, 1)], dt = 0.05;
   let t = 0;
   for (; t < maxT; t += dt) {
@@ -47,6 +49,15 @@ export function matrix(budget = 600, trials = 20, roster = ROSTER, up = null, se
   const M = {};
   for (const a of roster) { M[a] = {}; for (const b of roster) { if (a === b) { M[a][b] = null; continue; } let w = 0; for (let s = 1; s <= trials; s++) { const r = fight(a, b, budget, s * 7919 + a.length * 31 + b.length + seedOff, 180, up); w += r.win === 0 ? 1 : r.win === -1 ? 0.5 : 0; } M[a][b] = w / trials; } }
   return M;
+}
+// scénario héros + escorte : 1 héros (400) + 200 de lanciers (escorte anti-cavalerie, la plus stable aux 3 presets),
+// contre 600 de l'unité adverse ; composition modifiable via le paramètre esc
+export const ESCORT = [['lancier', 200]];
+export const heroArmy = (esc = ESCORT) => [['heros', costOf(UNIT.heros)], ...esc];
+export function escortRow(trials = 40, up = null, seedOff = 0, esc = ESCORT) {
+  const row = {}, total = costOf(UNIT.heros) + esc.reduce((t, [, b]) => t + b, 0);
+  for (const b of ROSTER) { if (b === 'heros') continue; let w = 0; for (let s = 1; s <= trials; s++) { const r = fight(heroArmy(esc), [[b, total]], total, s * 7919 + 97 + b.length + seedOff, 180, up); w += r.win === 0 ? 1 : r.win === -1 ? 0.5 : 0; } row[b] = w / trials; }
+  return row;
 }
 export const dominant = M => Object.keys(M).filter(a => Object.keys(M[a]).every(b => a === b || M[a][b] > 0.5));
 
