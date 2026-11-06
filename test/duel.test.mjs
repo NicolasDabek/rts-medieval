@@ -17,7 +17,8 @@
 // Passe GD 10 : Balistique et Chimie ne concernent plus que les tours et l'hôtel de ville ; l'archer retombe à 57 %
 // aux presets âge 3 / max (avant : 59–60 %), d'où la cible 42–58 % resserrée pour tous les presets.
 import { UNIT } from '../data.js';
-import { matrix, dominant, ROSTER, spent, UPS, escortRow, ESCORT } from '../tools/duel.mjs';
+import { matrix, dominant, ROSTER, spent, UPS, escortRow, ESCORT, fight } from '../tools/duel.mjs';
+import { costOf } from '../rules.js';
 export const COUNTERS = { lancier: ['cavalier', 'heros'], cavalier: ['archer', 'tirailleur'], archer: ['epeiste', 'lancier'], tirailleur: ['archer', 'lancier'], epeiste: ['lancier', 'cavalier'], heros: ['epeiste', 'cavalier'] };
 const BUDGETS = [300, 600, 1200], TRIALS = 40, SEEDS = [0, 1000], pct = x => Math.round(x * 100);
 const errors = [], all = {}, byUp = {};
@@ -66,5 +67,10 @@ for (const off of SEEDS) for (const up of Object.keys(UPS)) {
   console.log(`héros + escorte (${ESCORT.map(([t, b]) => b + ' ' + t).join(', ')}) graines+${off} ${up} · ${Object.entries(r).map(([b, x]) => b + ' ' + pct(x) + '%').join(', ')} · moyenne ${pct(m)}%`);
   if (pct(m) < 40 || pct(m) > 60) errors.push(`héros + escorte graines+${off} ${up} : moyenne ${pct(m)} % (cible 40–60)`);
 }
+// héros seul (400) contre 600 de lanciers (passe GD 12) : la régénération (2 PV/s hors combat) ne doit pas lui permettre de gagner (≤ 15 %)
+for (const off of SEEDS) for (const up of Object.keys(UPS)) { let w = 0;
+  for (let s = 1; s <= TRIALS; s++) { const r = fight([['heros', costOf(UNIT.heros)]], [['lancier', 600]], 600, s * 7919 + 53 + off, 180, up); w += r.win === 0 ? 1 : r.win === -1 ? 0.5 : 0; }
+  console.log(`héros seul contre 600 de lanciers graines+${off} ${up} : ${pct(w / TRIALS)} %`);
+  if (pct(w / TRIALS) > 15) errors.push(`héros seul contre 600 de lanciers graines+${off} ${up} : ${pct(w / TRIALS)} % (max 15)`); }
 if (errors.length) { console.error('ÉCHEC :\n  ' + errors.join('\n  ')); process.exit(1); }
 console.log('OK : équilibrage dans les cibles');

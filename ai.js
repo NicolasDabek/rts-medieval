@@ -1,5 +1,6 @@
 import { BUILD, UNIT, RES, TECHS, AGES } from './data.js';
 import { st } from './state.js';
+import { pickCounter } from './aipick.js';
 import { sfx, teams } from './config.js';
 import { msg } from './ui.js';
 import { ageUp, canPay, canTech, canTrain, cmdBuild, cmdGather, cmdMove, hdvOf, nearestRes, placeBuilding, popCap, popCount, queuedUnits, resTypeOf, research, train } from './units.js';
@@ -27,14 +28,8 @@ export function aiDefend(src) {
 export const playerCls = c => units.filter(u => u.team === 0 && u.def.cls === c).length;
 export function aiPickUnit(b) {
   const opts = Object.keys(UNIT).filter(k => UNIT[k].b === b.type && k !== 'villageois' && k !== 'heros' && !canTrain(b, k)); if (!opts.length) return null;
-  // réponse proportionnelle : la part de chaque type d'unité du joueur = la part des formations IA dédiées à son contre
-  // (contres tirés de la matrice de duels à coût égal, test/duel.test.mjs : ≥ 80 %)
-  const COUNTER = { epeiste: ['archer'], lancier: ['epeiste', 'archer', 'tirailleur'], archer: ['cavalier', 'tirailleur'], tirailleur: ['epeiste', 'cavalier'], cavalier: ['lancier', 'epeiste'], belier: ['cavalier', 'epeiste'], catapulte: ['cavalier'], heros: ['lancier', 'archer'] };
-  const pc = Object.keys(COUNTER).map(k => [k, units.filter(u => u.team === 0 && u.type === k).length]), tot = pc.reduce((s, x) => s + x[1], 0);
-  if (tot >= 3 && Math.random() < 0.85) {
-    let r = Math.random() * tot;
-    for (const [k, n] of pc) { if ((r -= n) < 0) { const ok = COUNTER[k].filter(c => opts.includes(c)); if (ok.length) return ok[Math.floor(Math.random() * ok.length)]; break; } }
-  }
+  const enemy = {}; for (const u of units) if (u.team === 0) enemy[u.type] = (enemy[u.type] || 0) + 1;
+  const c = pickCounter(enemy, opts); if (c) return c;
   if (b.type === 'atelier' && units.filter(u => u.team === 1 && u.def.cls === 'siege').length >= 2 + teams[1].age) return null;
   return opts[Math.floor(Math.random() * opts.length)];
 }
