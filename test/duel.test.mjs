@@ -72,5 +72,20 @@ for (const off of SEEDS) for (const up of Object.keys(UPS)) { let w = 0;
   for (let s = 1; s <= TRIALS; s++) { const r = fight([['heros', costOf(UNIT.heros)]], [['lancier', 600]], 600, s * 7919 + 53 + off, 180, up); w += r.win === 0 ? 1 : r.win === -1 ? 0.5 : 0; }
   console.log(`héros seul contre 600 de lanciers graines+${off} ${up} : ${pct(w / TRIALS)} %`);
   if (pct(w / TRIALS) > 15) errors.push(`héros seul contre 600 de lanciers graines+${off} ${up} : ${pct(w / TRIALS)} % (max 15)`); }
+// passe GD 13 (affichage, sans échec ni seuil modifié) : paires serrées à 1200 sur les deux jeux de graines
+for (const off of SEEDS) { const M = all[off][1200], l = [];
+  ROSTER.forEach((a, i) => ROSTER.forEach((b, j) => { if (i < j && M[a][b] >= 0.2 && M[a][b] <= 0.8) l.push(`${a}–${b} ${pct(M[a][b])} %`); }));
+  console.log(`paires serrées 1200 graines+${off} : ${l.length}/15${l.length ? ' (' + l.join(', ') + ')' : ''}`); }
+// passe GD 13 (affichage) : épéiste–tirailleur sur 80 graines jouées des deux côtés (160 combats par case), IC95 par bootstrap
+// percentile (20 000 rééchantillonnages des 80 paires de côtés : les deux orientations d'une graine ne sont pas indépendantes)
+{ const N = 80, R = (seed => () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; })(917);
+  const sc = (r, side) => r.win === side ? 1 : r.win === -1 ? 0.5 : 0;
+  for (const budget of [600, 1200]) for (const off of SEEDS) {
+    const pairs = []; for (let s = 1; s <= N; s++) { const seed = s * 7919 + 7 * 31 + 10 + off; pairs.push((sc(fight('epeiste', 'tirailleur', budget, seed), 0) + sc(fight('tirailleur', 'epeiste', budget, seed), 1)) / 2); }
+    const m = pairs.reduce((a, b) => a + b, 0) / N, bs = [];
+    for (let j = 0; j < 20000; j++) { let x = 0; for (let i = 0; i < N; i++) x += pairs[Math.floor(R() * N)]; bs.push(x / N); }
+    bs.sort((a, b) => a - b);
+    console.log(`épéiste > tirailleur ${budget} graines+${off} (80 graines × 2 côtés) : ${(m * 100).toFixed(1)} % [IC95 ${(bs[500] * 100).toFixed(1)}–${(bs[19499] * 100).toFixed(1)}]`);
+  } }
 if (errors.length) { console.error('ÉCHEC :\n  ' + errors.join('\n  ')); process.exit(1); }
 console.log('OK : équilibrage dans les cibles');

@@ -21,12 +21,13 @@ Debug : `?diff=normal`, `?speed=10`, `?nofog`.
 - `app.js` entrée · `main.js` boucle + API `window.__game` · `state.js` état mutable partagé
 - `config.js` paramètres/équipes · `data.js` statistiques · `render.js` scène/caméra
 - `world.js` entités + murs instanciés · `path.js` A* · `map.js` carte + brouillard
-- `units.js` économie/commandes/combat · `ai.js` IA · `ui.js` panneaux/HUD/minimap · `input.js` souris/tactile/clavier
+- `units.js` économie/commandes/combat · `ai.js` IA · `aipick.js` choix d'unités de l'IA · `wave.js` vagues groupées de l'IA · `ui.js` panneaux/HUD/minimap · `input.js` souris/tactile/clavier
 - `save.js` sauvegarde · `audio.js` sons
 
 ## Équilibrage et tests
 - `rules.js` : formule de dégâts, portée et recul (kiting) partagés par le jeu et l'outil de duel.
 - `node tools/duel.mjs [budget] [essais]` : matrice des duels à coût égal (sans navigateur).
 - `npm test` : duels à budget égal (à 1 % près, dernière unité au prorata), contres francs assumés. Vérifie : moyenne de chaque unité 35–65 %, ≤ 20/30 duels à 0/100 %, ≥ 4/15 paires serrées, contres voulus ≥ 80 % à 600 et 1200, chaque unité a un duel gagné ≥ 80 % et un perdu ≤ 20 %, écart ≤ 35 points entre 600 et 1200.
+- `npm test` (IA, `test/ai.test.mjs`) : l'IA attaque en vagues groupées (`wave.js` : un membre à plus de 2 m devant le plus en retard l'attend jusqu'au premier contact ; libéré à sa mort, si son ordre change ou après 90 s) ; 80 graines à 600 et 1200 : miroir 40–60 %, IA qui contre ≥ 90 % (chaque adversaire ≥ 50 %, tirailleurs ≥ 75 %), doubles contres ≥ 65 %, épéistes + cavaliers groupés contre tirailleurs ≥ 50 %. Affiche aussi les paires serrées à 1200 et épéiste–tirailleur sur 80 graines des deux côtés avec IC95.
 - Contres voulus : lancier > cavalier, héros · cavalier > archer, tirailleur · archer > épéiste, lancier · tirailleur > archer, lancier · épéiste > lancier, cavalier · héros > épéiste, cavalier.
 - Victoire alternative : la **Merveille** (âge impérial, 1000 de chaque ressource) fait gagner si elle tient 5 minutes.

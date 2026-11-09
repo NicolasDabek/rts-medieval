@@ -3,6 +3,7 @@ import { AGES, UNIT, TECHS, BUILD } from './data.js';
 import * as THREE from 'three';
 import { st } from './state.js';
 import { aiDefend } from './ai.js';
+import { waveSpeed, WAVE } from './wave.js';
 import { HALF, sfx, teams } from './config.js';
 import { isVis } from './map.js';
 import { N, findPath, freeSlot, gridT, los, moveTo, rebuildGrid, toCell } from './path.js';
@@ -153,6 +154,9 @@ export function nextJob(u, b) { // après une construction : chantier voisin, fe
   if (b.def.drop && b.type !== 'hdv') { const r = nearestRes(b.def.drop[0], b.pos, 18); if (r) return cmdGather(u, r); }
   u.cmd = null;
 }
+// vagues (wave.js) : distance restante jusqu'à la cible de la vague ; au contact = cible à portée (+ marge) ou touché il y a < 1 s
+const waveRemaining = o => { const p = o.wave.dest; return p ? Math.hypot(o.pos.x - p.x, o.pos.z - p.z) : 0; };
+const waveEngaged = o => (o.target && !o.target.dead && edgeD(o.pos, o.target) <= rangeOf(o.def, o.team) + WAVE.contactMargin) || st.gameTime - (o.lastHit ?? -99) < 1;
 export function updateUnit(u, dt) {
   const S = u.def, T = teams[u.team]; u.cdT -= dt;
   if (S.regen && u.hp < u.maxHp && st.gameTime - (u.lastHit || -99) > 5) u.hp = Math.min(u.maxHp, u.hp + S.regen * dt);
@@ -194,13 +198,15 @@ export function updateUnit(u, dt) {
         ax += -nz * sg * w; az += nx * sg * w;
       }
       nx += ax; nz += az; const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;
-      const sp = S.speed * (S.cls === 'villager' ? T.up.vspeed : 1);
+      // vague de l'IA (wave.js) : un membre trop en avance attend le plus en retard — marche et poursuite (même chemin)
+      const wf = u.wave ? waveSpeed(u, waveRemaining, waveEngaged) : 1; u.waveWait = wf === 0;
+      const sp = S.speed * (S.cls === 'villager' ? T.up.vspeed : 1) * wf;
       const st = Math.min(len, sp * dt); u.pos.x += nx * st; u.pos.z += nz * st; u.mesh.rotation.y = Math.atan2(nx, nz); moving = true;
     }
   }
   u.chkT = (u.chkT || 0) + dt; // détection de blocage
   if (u.chkT > 1) {
-    if (u.path.length && u.lastChk && d2(u.pos, u.lastChk) < S.speed * 0.15) {
+    if (u.path.length && u.lastChk && !u.waveWait && d2(u.pos, u.lastChk) < S.speed * 0.15) {
       u.stuck = (u.stuck || 0) + 1; u.unstuck = (u.unstuck || 0) + 1; const dest = u.path[u.path.length - 1];
       if (u.stuck >= 5) { u.path = []; u.stuck = 0; }
       else { u.path = findPath(u.pos, dest, u.team); if (u.stuck >= 2) { const a = rand(0, 6.28); u.path.unshift(freeSlot(new THREE.Vector3(u.pos.x + Math.cos(a) * 2, 0, u.pos.z + Math.sin(a) * 2), new Set(), u.team)); } }

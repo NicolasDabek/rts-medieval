@@ -1,6 +1,7 @@
 import { BUILD, UNIT, RES, TECHS, AGES } from './data.js';
 import { st } from './state.js';
-import { pickCounter } from './aipick.js';
+import { pickCounter, HOLD } from './aipick.js';
+import { makeWave, pruneWave } from './wave.js';
 import { sfx, teams } from './config.js';
 import { msg } from './ui.js';
 import { ageUp, canPay, canTech, canTrain, cmdBuild, cmdGather, cmdMove, hdvOf, nearestRes, placeBuilding, popCap, popCount, queuedUnits, resTypeOf, research, train } from './units.js';
@@ -9,6 +10,8 @@ import { buildings, d2, extOf, free, rand, units } from './world.js';
 
 // ================= IA =================
 export const ai = { t: 0, think: 0, nextWave: 300, waveN: 0 };
+// vagues en cours (hors de `ai` : non sauvegardées, elles référencent des unités) — wave.js
+export const waves = [];
 export function aiSpotNear(p, r, minD, maxD, e = null) {
   for (let k = 0; k < 60; k++) { const a = rand(0, Math.PI * 2), d = rand(minD, maxD), x = p.x + Math.cos(a) * d, z = p.z + Math.sin(a) * d; if (free(x, z, r + 0.5, null, e && [e[0] + 0.5, e[1] + 0.5])) return [x, z]; }
   return null;
@@ -26,15 +29,17 @@ export function aiDefend(src) {
   for (const s of units) if (s.team === 1 && s.def.cls !== 'villager' && !s.target && (!s.cmd || s.cmd.type !== 'attackMove')) cmdMove(s, src.pos, 'attackMove');
 }
 export const playerCls = c => units.filter(u => u.team === 0 && u.def.cls === c).length;
-export function aiPickUnit(b) {
+// HOLD (aipick.js) : ce bâtiment ne forme rien d'utile contre l'armée du joueur, il attend — sauf si la base est menacée
+export function aiPickUnit(b, threatened = false) {
   const opts = Object.keys(UNIT).filter(k => UNIT[k].b === b.type && k !== 'villageois' && k !== 'heros' && !canTrain(b, k)); if (!opts.length) return null;
   const enemy = {}; for (const u of units) if (u.team === 0) enemy[u.type] = (enemy[u.type] || 0) + 1;
-  const c = pickCounter(enemy, opts); if (c) return c;
+  let c = pickCounter(enemy, opts); if (c === HOLD) { if (!threatened) return null; c = null; }
   if (b.type === 'atelier' && units.filter(u => u.team === 1 && u.def.cls === 'siege').length >= 2 + teams[1].age) return null;
-  return opts[Math.floor(Math.random() * opts.length)];
+  return c || opts[Math.floor(Math.random() * opts.length)];
 }
 export function aiUpdate(dt) {
   ai.t += dt; ai.think -= dt; if (ai.think > 0) return; ai.think = 1;
+  for (let i = waves.length - 1; i >= 0; i--) if (!pruneWave(waves[i], ai.t, u => u.cmd)) waves.splice(i, 1); // libération : mort, ordre changé, timeout
   const T = teams[1]; RES.forEach((k, i) => T.res[k] += st.D.bonus[i]);
   const h = hdvOf(1); if (!h) return;
   const my = units.filter(u => u.team === 1), vills = my.filter(u => u.def.cls === 'villager'), army = my.filter(u => u.def.cls !== 'villager');
@@ -74,7 +79,7 @@ export function aiUpdate(dt) {
   const ageCost = T.age < 3 ? AGES[T.age + 1].cost : null, saving = ageCost && vills.length >= need * 0.8 && ai.t > st.D.ageT[T.age + 1] - 60;
   const armyCap = T.age === 0 ? st.D.base + 2 : 8 + T.age * 8 + ai.waveN * 2;
   for (const b of mine) if (b.done && b.queue.length < 2 && !['hdv', 'maison'].includes(b.type)) {
-    const k = aiPickUnit(b); if (!k) continue; const c = UNIT[k].cost;
+    const k = aiPickUnit(b, threatened); if (!k) continue; const c = UNIT[k].cost;
     const surplus = !saving || Object.entries(ageCost).every(([r, v]) => T.res[r] - (c[r] || 0) >= v);
     if (threatened || (surplus && army.length < armyCap)) train(b, k);
   }
@@ -86,12 +91,14 @@ export function aiUpdate(dt) {
   if (pW && pW.done) army.filter(s => !s.target && (!s.cmd || s.cmd.type !== 'attackMove')).forEach(s => cmdMove(s, pW.pos, 'attackMove'));
   if (st.D.label === 'Difficile' && ai.t > 1500 && T.age >= 3 && !has('merveille') && RES.reduce((s, k) => s + T.res[k], 0) >= 3000) aiPlace('merveille', null, vills, 6);
   if (ai.t > ai.nextWave) {
-    const idle = army.filter(s => !s.target && s.type !== 'heros' || (s.type === 'heros' && ai.waveN >= 2)), n = Math.min(idle.length, st.D.base + ai.waveN * st.D.grow);
+    // vague : unités libres seulement — un attackMove déjà lancé (vague précédente, défense, merveille) n'est pas réaffecté
+    const idle = army.filter(s => !s.target && !s.wave && s.cmd?.type !== 'attackMove' && (s.type !== 'heros' || ai.waveN >= 2)), n = Math.min(idle.length, st.D.base + ai.waveN * st.D.grow);
     const eco = buildings.filter(b => b.team === 0 && b.done && ['moulin', 'camp_bois', 'camp_mine'].includes(b.type));
     const wonder = buildings.find(b => b.team === 0 && b.def.wonder);
     const tgt = wonder || (ai.waveN > 0 && eco.length && Math.random() < 0.35 ? eco[Math.floor(Math.random() * eco.length)] : null) || hdvOf(0) || buildings.find(b => b.team === 0);
     if (n >= Math.min(3, st.D.base) && tgt) {
-      idle.slice(0, n).forEach(s => cmdMove(s, tgt.pos, 'attackMove'));
+      const members = idle.slice(0, n); members.forEach(s => cmdMove(s, tgt.pos, 'attackMove'));
+      const w = makeWave(members, ai.t, u => u.cmd); w.dest = tgt.pos.clone(); waves.push(w); // attaque groupée (wave.js)
       ai.waveN++; ai.nextWave = ai.t + Math.max(st.D.interval * 0.6, st.D.interval - ai.waveN * 10); msg(`⚔ Vague ennemie n°${ai.waveN} en approche (${n} unités) !`, 5000); sfx('horn');
     } else ai.nextWave = ai.t + 20;
   }

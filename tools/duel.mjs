@@ -2,6 +2,7 @@
 // node tools/duel.mjs [budget] [essais]
 import { UNIT } from '../data.js';
 import { computeDamage, rangeWith, shouldKite, costOf } from '../rules.js';
+import { makeWave, pruneWave, waveSpeed, WAVE } from '../wave.js';
 
 // presets d'améliorations (même valeur pour les deux camps), agrégés comme units.js
 export const UPS = { none: null, age3: { atk: 2, arm: 2, projAtk: 0, range: 2 }, max: { atk: 4, arm: 4, projAtk: 1, range: 2 } };
@@ -14,7 +15,9 @@ function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let
 // Combat N contre N sur une ligne : déplacement vers l'ennemi le plus proche, tir quand à portée, recul (kiting) selon rules.js
 export const spent = (type, budget) => { const c = costOf(UNIT[type]), n = Math.floor(budget / c), f = budget / c - n; return c * (n + (f > 0.01 ? f : 0)); };
 // a / b : type d'unité (budget commun) ou composition [[type, budget], …] (ex. héros + escorte, voir ESCORT)
-export function fight(a, b, budget = 600, seed = 1, maxT = 180, up = null) {
+// wave : { leash, timeout, sides } (optionnel) — les camps listés (défaut : A) attaquent en vague groupée
+// (wave.js, même règle que l'IA en jeu ; simulateur 1D : parité de politique, sans obstacles ni pathfinding)
+export function fight(a, b, budget = 600, seed = 1, maxT = 180, up = null, wave = null) {
   if (typeof up === 'string') up = UPS[up];
   // le héros est unique en jeu : testé seul (1 héros) contre le même coût d'adversaires
   if (a === 'heros' || b === 'heros') budget = costOf(UNIT.heros);
@@ -25,10 +28,15 @@ export function fight(a, b, budget = 600, seed = 1, maxT = 180, up = null) {
     for (let i = 0; i < n; i++) add(1); if (frac > 0.01) add(frac); return out; };
   const mk = (army, side) => { const out = []; for (const [t, bu] of (typeof army === 'string' ? [[army, budget]] : army)) mkOne(t, side, bu, out); return out; };
   const all = [...mk(a, 0), ...mk(b, 1)], dt = 0.05;
+  // distance restante jusqu'au départ adverse (camp A ≈ 0 → 30, camp B ≈ 30 → 0)
+  const W = wave ? (wave.sides || [0]).map(sd => makeWave(all.filter(u => u.side === sd), 0, null, wave)) : [], rem = u => u.side ? u.x : 30 - u.x;
+  // au contact : un ennemi à portée (+ marge de recul) — calculé sur l'ennemi le plus proche, comme le ciblage
+  const engaged = u => { for (const o of all) if (o.side !== u.side && o.hp > 0 && Math.abs(o.x - u.x) - 2 * BODY <= rangeWith(u.d, up) + (wave?.contactMargin ?? WAVE.contactMargin)) return true; return false; };
   let t = 0;
   for (; t < maxT; t += dt) {
     const alive = s => all.filter(u => u.side === s && u.hp > 0);
     if (!alive(0).length || !alive(1).length) break;
+    for (const w of W) pruneWave(w, t);
     for (const u of all) {
       if (u.hp <= 0) continue; u.cdT -= dt;
       let tg = null, bd = 1e9; for (const o of all) if (o.side !== u.side && o.hp > 0) { const dd = Math.abs(o.x - u.x); if (dd < bd) { bd = dd; tg = o; } }
@@ -36,7 +44,7 @@ export function fight(a, b, budget = 600, seed = 1, maxT = 180, up = null) {
       const dist = Math.max(0, bd - 2 * BODY), dir = Math.sign(tg.x - u.x) || 1;
       if (shouldKite(u.d, tg.d, dist, u.cdT)) { u.x -= dir * u.spd * dt; continue; }
       if (dist <= rangeWith(u.d, up)) { if (u.cdT <= 0) { u.cdT = u.d.cd; tg.hp -= computeDamage(u.d, up, { kind: 'unit', def: tg.d, up }) * (0.9 + R() * 0.2); tg.lastHit = t; } }
-      else u.x += dir * u.spd * dt;
+      else u.x += dir * u.spd * dt * (u.wave ? waveSpeed(u, rem, engaged) : 1);
       if (u.d.regen && t - (u.lastHit ?? -9) > 5) u.hp = Math.min(u.maxHp, u.hp + u.d.regen * dt);
     }
   }
