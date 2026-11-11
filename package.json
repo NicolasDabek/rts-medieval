@@ -1,9 +1,11 @@
 {
   "name": "rts-medieval",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "duel": "node tools/duel.mjs",
-    "test": "node test/duel.test.mjs && node test/ai.test.mjs"
+    "test": "node test/duel.test.mjs && node test/ai.test.mjs && node test/version.test.mjs",
+    "ic95": "node tools/ic95.mjs"
   }
 }

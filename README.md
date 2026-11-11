@@ -1,21 +1,30 @@
-# RTS Médiéval
-RTS 3D dans le navigateur (PC et mobile), inspiré d'Age of Empires / Empire Earth. Three.js est vendored dans `vendor/` (aucun CDN), sons générés en WebAudio.
-Jouer : https://nicolasdabek.github.io/rts-medieval/ — en local : `python3 -m http.server` puis http://localhost:8000.
+# RTS Médiéval — v1.0.0
+RTS 3D dans le navigateur (PC et mobile), inspiré d'Age of Empires / Empire Earth. Three.js r169 est inclus dans `vendor/` (aucun CDN, aucune requête externe), sons générés en WebAudio.
 
-**But** : détruire l'hôtel de ville ennemi. Difficulté au démarrage (Facile / Normal / Difficile).
+## Jouer
+- En ligne : https://nicolasdabek.github.io/rts-medieval/
+- En local (aucune installation) : `python3 -m http.server` à la racine, puis http://localhost:8000.
+- Choisissez la difficulté dans le menu :
+  - **Facile** : vagues petites et tardives (~10 min), IA moins rusée (contre une fois sur deux, vagues non groupées).
+  - **Normal** (recommandé) : 1re vague vers 7 min, IA qui contre votre armée.
+  - **Difficile** : IA plus rapide, avec un bonus de ressources.
+- Un court tutoriel (passable) se lance à la première partie ; il se relance depuis l'aide « ? ».
+
+**But** : détruire l'hôtel de ville ennemi, ou faire tenir une **Merveille** 5 minutes (âge impérial, 1000 de chaque ressource).
 
 **Époques** : Âge sombre → féodal → châteaux → impérial (recherche à l'hôtel de ville), chacune débloque bâtiments, unités et technologies.
 **Économie** : nourriture (baies, cerfs, fermes près d'un moulin), bois, or, pierre ; dépôts : hôtel de ville, moulin (nourriture), camp de bûcheron (bois), camp de mineur (or/pierre).
-**Armée** (contres) : épéiste, lancier (anti-cavalerie), archer (anti-infanterie), cavalier (anti-archers/siège), bélier & catapulte (anti-bâtiments), héros unique (Roland, régénération).
+**Armée** (contres) : épéiste, lancier (anti-cavalerie), tirailleur (anti-archers), archer (anti-infanterie), cavalier (anti-archers/siège), bélier & catapulte (anti-bâtiments), héros unique (Roland, régénération).
 **Défenses** : tours, palissades et murailles tracées, portes (laissent passer votre camp seulement).
 **Technologies** : forge (attaque/armure), université (maçonnerie, balistique, chimie), moulin/camps (récolte), brouette, conscription.
 
-**PC** : clic gauche / glisser = sélection (Maj = ajouter, double-clic = même type) · clic droit = ordre contextuel (déplacer / récolter / attaquer / construire / déposer ; avec un bâtiment sélectionné = point de ralliement) · F = attaque-déplacement · X = arrêter · R = pivoter le bâtiment · . ou I = villageois inactif · H = base · WASD/ZQSD/flèches/bords = caméra · molette = zoom · Échap = annuler. Murs : cliquer-glisser (ou 2 clics).
+## Commandes
+**PC** : clic gauche / glisser = sélection (Maj = ajouter, double-clic = même type) · clic droit = ordre contextuel (déplacer / récolter / attaquer / construire / déposer ; avec un bâtiment sélectionné = point de ralliement) · F = attaque-déplacement · X = arrêter · R = pivoter le bâtiment · . ou I = villageois inactif · H = base · Ctrl+1..9 = créer un groupe, 1..9 = le sélectionner · WASD/ZQSD/flèches/bords = caméra · molette = zoom · Échap = annuler · ? ou F1 = aide. Murs : cliquer-glisser (ou 2 clics).
 
-**Mobile** : toucher = sélection / ordre · appui long = sélectionner · 1 doigt = caméra · pincer = zoom · murs : toucher départ puis arrivée · boutons à gauche : cadre, attaque, armée, base, villageois inactif, désélection.
+**Mobile** : toucher = sélection / ordre · appui long = sélectionner sans ordre · 1 doigt = caméra · pincer = zoom · minicarte = déplacer la vue · murs : toucher départ puis arrivée · boutons à gauche : cadre, attaque, armée, base, villageois inactif, désélection.
 
-HUD : 🔊 son, 💾 sauvegarder, 📂 charger (localStorage).
-Debug : `?diff=normal`, `?speed=10`, `?nofog`.
+HUD : ? aide, 🔊 son, 💾 sauvegarder, 📂 charger (localStorage ; sauvegarde automatique toutes les 60 s).
+Débogage : `?diff=normal`, `?speed=10`, `?nofog`.
 
 ## Structure du code (modules ES)
 - `app.js` entrée · `main.js` boucle + API `window.__game` · `state.js` état mutable partagé
@@ -25,9 +34,14 @@ Debug : `?diff=normal`, `?speed=10`, `?nofog`.
 - `save.js` sauvegarde · `audio.js` sons
 
 ## Équilibrage et tests
-- `rules.js` : formule de dégâts, portée et recul (kiting) partagés par le jeu et l'outil de duel.
-- `node tools/duel.mjs [budget] [essais]` : matrice des duels à coût égal (sans navigateur).
-- `npm test` : duels à budget égal (à 1 % près, dernière unité au prorata), contres francs assumés. Vérifie : moyenne de chaque unité 35–65 %, ≤ 20/30 duels à 0/100 %, ≥ 4/15 paires serrées, contres voulus ≥ 80 % à 600 et 1200, chaque unité a un duel gagné ≥ 80 % et un perdu ≤ 20 %, écart ≤ 35 points entre 600 et 1200.
-- `npm test` (IA, `test/ai.test.mjs`) : l'IA attaque en vagues groupées (`wave.js` : un membre à plus de 2 m devant le plus en retard l'attend jusqu'au premier contact ; libéré à sa mort, si son ordre change ou après 90 s) ; 80 graines à 600 et 1200 : miroir 40–60 %, IA qui contre ≥ 90 % (chaque adversaire ≥ 50 %, tirailleurs ≥ 75 %), doubles contres ≥ 65 %, épéistes + cavaliers groupés contre tirailleurs ≥ 50 %. Affiche aussi les paires serrées à 1200 et épéiste–tirailleur sur 80 graines des deux côtés avec IC95.
+Prérequis : Node.js 18 ou plus récent (aucune dépendance à installer).
+- `npm test` lance trois tests sans navigateur :
+  - `test/duel.test.mjs` (duels à coût égal, 40 essais × 2 jeux de graines, budgets 300/600/1200, presets d'améliorations aucune / âge 3 / max) : moyenne de chaque unité 42–58 % (35–65 % à 300), ≤ 15/30 duels à 0/100 %, ≥ 2/15 paires serrées à 600 et ≥ 1 à 1200, contres voulus ≥ 85 %, chaque unité a un duel gagné ≥ 80 % et un perdu ≤ 20 %, écart ≤ 10 points entre 600 et 1200, héros + escorte 40–60 %, héros seul contre 600 de lanciers ≤ 15 %, descriptions « Bat / Craint » conformes à la matrice. Affiche aussi les paires serrées à 1200 et l'IC95 épéiste–tirailleur.
+  - `test/ai.test.mjs` (80 graines à 600 et 1200) : miroir Normal 40–60 %, IA qui contre ≥ 90 % (chaque adversaire ≥ 50 %, tirailleurs ≥ 75 %), aussi avec un modèle honnête par bâtiment ; Facile ≤ 70 % et ≥ 25 points sous Normal ; doubles contres ≥ 65 % ; épéistes + cavaliers en vague groupée contre tirailleurs ≥ 50 %.
+  - `test/version.test.mjs` : même version dans `package.json`, le menu et `CHANGELOG.md` ; aucune ressource externe dans la page.
+- `node tools/duel.mjs [budget] [essais]` : matrice des duels à coût égal.
+- `npm run ic95 -- [a] [b] [graines] [budgets] [décalages] [preset]` (`tools/ic95.mjs`) : mesure appariée (graines jouées des deux côtés) avec IC95, ex. `npm run ic95 -- epeiste tirailleur 400 600,1200 0`.
+- `rules.js` : formule de dégâts, portée et recul (kiting) partagés par le jeu et l'outil de duel. `aipick.js` et `wave.js` : choix d'unités et vagues groupées de l'IA, partagés par le jeu et les tests.
 - Contres voulus : lancier > cavalier, héros · cavalier > archer, tirailleur · archer > épéiste, lancier · tirailleur > archer, lancier · épéiste > lancier, cavalier · héros > épéiste, cavalier.
-- Victoire alternative : la **Merveille** (âge impérial, 1000 de chaque ressource) fait gagner si elle tient 5 minutes.
+
+Historique des versions : [CHANGELOG.md](CHANGELOG.md).
