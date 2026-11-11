@@ -62,7 +62,7 @@ export const TECHS = {
 };
 
 export const DIFFS = {
-  facile: { label: 'Facile', bonus: [0, 0, 0, 0], first: 600, base: 2, grow: 1, interval: 240, vills: 14, barracks: 1, gather: 0.8, ageK: 1.3, ageT: [0, 330, 720, 1140] },
+  facile: { label: 'Facile', counterP: 0.5, safeRest: false, grouped: false, bonus: [0, 0, 0, 0], first: 600, base: 2, grow: 1, interval: 240, vills: 14, barracks: 1, gather: 0.8, ageK: 1.3, ageT: [0, 330, 720, 1140] },
   normal: { label: 'Normal', bonus: [0, 0, 0, 0], first: 420, base: 3, grow: 2, interval: 180, vills: 20, barracks: 1, gather: 1, ageK: 1, ageT: [0, 250, 560, 900] },
   difficile: { label: 'Difficile', bonus: [0.25, 0.2, 0.15, 0.05], first: 330, base: 4, grow: 3, interval: 140, vills: 26, barracks: 2, gather: 1.1, ageK: 0.85, ageT: [0, 190, 430, 720] },
 };

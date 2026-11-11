@@ -1,6 +1,6 @@
 import { BUILD, UNIT, RES, TECHS, AGES } from './data.js';
 import { st } from './state.js';
-import { pickCounter, HOLD } from './aipick.js';
+import { pickCounter, HOLD, COUNTER_P } from './aipick.js';
 import { makeWave, pruneWave } from './wave.js';
 import { sfx, teams } from './config.js';
 import { msg } from './ui.js';
@@ -33,7 +33,8 @@ export const playerCls = c => units.filter(u => u.team === 0 && u.def.cls === c)
 export function aiPickUnit(b, threatened = false) {
   const opts = Object.keys(UNIT).filter(k => UNIT[k].b === b.type && k !== 'villageois' && k !== 'heros' && !canTrain(b, k)); if (!opts.length) return null;
   const enemy = {}; for (const u of units) if (u.team === 0) enemy[u.type] = (enemy[u.type] || 0) + 1;
-  let c = pickCounter(enemy, opts); if (c === HOLD) { if (!threatened) return null; c = null; }
+  const avail = Object.keys(UNIT).filter(k => k !== 'villageois' && k !== 'heros' && buildings.some(o => o.team === 1 && o.type === UNIT[k].b && !canTrain(o, k)));
+  let c = pickCounter(enemy, opts, Math.random, st.D.counterP ?? COUNTER_P, st.D.safeRest ?? true, avail); if (c === HOLD) { if (!threatened) return null; c = null; }
   if (b.type === 'atelier' && units.filter(u => u.team === 1 && u.def.cls === 'siege').length >= 2 + teams[1].age) return null;
   return c || opts[Math.floor(Math.random() * opts.length)];
 }
@@ -98,7 +99,7 @@ export function aiUpdate(dt) {
     const tgt = wonder || (ai.waveN > 0 && eco.length && Math.random() < 0.35 ? eco[Math.floor(Math.random() * eco.length)] : null) || hdvOf(0) || buildings.find(b => b.team === 0);
     if (n >= Math.min(3, st.D.base) && tgt) {
       const members = idle.slice(0, n); members.forEach(s => cmdMove(s, tgt.pos, 'attackMove'));
-      const w = makeWave(members, ai.t, u => u.cmd); w.dest = tgt.pos.clone(); waves.push(w); // attaque groupée (wave.js)
+      if (st.D.grouped !== false) { const w = makeWave(members, ai.t, u => u.cmd); w.dest = tgt.pos.clone(); waves.push(w); } // attaque groupée (wave.js) ; Facile : non groupée
       ai.waveN++; ai.nextWave = ai.t + Math.max(st.D.interval * 0.6, st.D.interval - ai.waveN * 10); msg(`⚔ Vague ennemie n°${ai.waveN} en approche (${n} unités) !`, 5000); sfx('horn');
     } else ai.nextWave = ai.t + 20;
   }

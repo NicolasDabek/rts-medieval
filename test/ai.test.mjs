@@ -9,10 +9,14 @@
 // - mélange épéistes + cavaliers 50/50 contre tirailleurs en vague ≥ 50 % (0 % sans vague)
 // - choix par bâtiment : une caserne contre des tirailleurs forme des épéistes (repli), jamais de lancier ni d'archer ;
 //   un camp de tir attend (HOLD)
-import { UNIT } from '../data.js';
+// - passe 1.0 : modèle honnête par bâtiment (caserne [épéiste, lancier, tirailleur], camp de tir [archer], écurie [cavalier],
+//   chacun choisit à tour de rôle avec ses seules options, HOLD = attend, null = au hasard parmi ses options, comme ai.js) :
+//   Normal mêmes cibles (global ≥ 90 %, chaque adversaire ≥ 50 %, tirailleurs ≥ 75 %) ; Facile (contre 50 %, reste au hasard,
+//   vagues non groupées) nettement plus faible : global ≤ 70 % et au moins 25 points sous Normal
+import { UNIT, DIFFS } from '../data.js';
 import { costOf } from '../rules.js';
 import { fight } from '../tools/duel.mjs';
-import { pickCounter, COUNTER, HOLD } from '../aipick.js';
+import { pickCounter, COUNTER, HOLD, COUNTER_P } from '../aipick.js';
 const OPTS = ['epeiste', 'lancier', 'tirailleur', 'archer', 'cavalier'], N = 80, pct = x => Math.round(x * 100), WAVE = {};
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const count = army => { const c = {}; for (const [t, b] of army) c[t] = (c[t] || 0) + b / costOf(UNIT[t]); return c; };
@@ -57,6 +61,23 @@ for (const BUDGET of [600, 1200]) {
     if (pct(g / N) < 50) errors.push(`épéistes + cavaliers en vague contre tirailleurs ${BUDGET} graines+${off} : ${pct(g / N)} % (cible ≥ 50)`);
   }
 }
+// modèle par bâtiment (passe 1.0) : Normal et Facile, mêmes graines
+const BLD = { caserne: ['epeiste', 'lancier', 'tirailleur'], archerie: ['archer'], ecurie: ['cavalier'] };
+for (const BUDGET of [600, 1200]) { const tot = {};
+  const add = (army, t) => { const left = BUDGET - army.reduce((s, [, b]) => s + b, 0); if (left > 0.5) army.push([t, Math.min(costOf(UNIT[t]), left)]); return left > 0.5; };
+  for (const dk of ['normal', 'facile']) { const D = DIFFS[dk], p = D.counterP ?? COUNTER_P, safe = D.safeRest ?? true, wave = D.grouped === false ? null : WAVE; let wc = 0; const per = {};
+    for (const e of OPTS) { per[e] = 0; for (let s = 1; s <= N; s++) {
+      const R = rng(s * 7331 + e.length), E = [[e, BUDGET]], A = []; let go = true, it = 0;
+      while (go && it++ < 500) for (const o of Object.values(BLD)) { let k = pickCounter(count(E), o, R, p, safe, OPTS); if (k === HOLD) continue; if (!k) k = o[Math.floor(R() * o.length)]; if (!add(A, k)) { go = false; break; } }
+      const r = score(fight(group(A), E, BUDGET, s * 7919 + 29 + e.length, 180, null, wave)); wc += r; per[e] += r / N; } }
+    tot[dk] = pct(wc / N / OPTS.length);
+    console.log(`IA ${D.label} par bâtiment contre mono-unité (${BUDGET}, ${N * OPTS.length} combats) : ${tot[dk]} % · ${OPTS.map(e => e + ' ' + pct(per[e]) + '%').join(', ')}`);
+    if (dk === 'normal') { if (tot[dk] < 90) errors.push(`Normal par bâtiment ${BUDGET} : ${tot[dk]} % (cible ≥ 90)`);
+      for (const e of OPTS) if (pct(per[e]) < 50) errors.push(`Normal par bâtiment contre ${e} ${BUDGET} : ${pct(per[e])} % (plancher 50)`);
+      if (pct(per.tirailleur) < 75) errors.push(`Normal par bâtiment contre tirailleur ${BUDGET} : ${pct(per.tirailleur)} % (cible ≥ 75)`); }
+  }
+  if (tot.facile > 70 || tot.normal - tot.facile < 25) errors.push(`Facile ${BUDGET} : ${tot.facile} % (cible ≤ 70 et ≥ 25 points sous Normal ${tot.normal} %)`);
+}
 // choix par bâtiment (pas de hasard pur faute du contre voulu)
 { const R = rng(7), enemy = { tirailleur: 20 }, seen = { caserne: new Set(), archerie: new Set(), ecurie: new Set() };
   const B = { caserne: ['epeiste', 'lancier', 'tirailleur'], archerie: ['archer'], ecurie: ['cavalier'] };
@@ -65,5 +86,8 @@ for (const BUDGET of [600, 1200]) {
   if (seen.caserne.has('lancier') || seen.caserne.has(null) || !seen.caserne.has('epeiste')) errors.push(`caserne contre tirailleurs : ${[...seen.caserne]}`);
   if (seen.archerie.size !== 1 || !seen.archerie.has(HOLD)) errors.push(`camp de tir contre tirailleurs : ${[...seen.archerie]} (attendu ${HOLD})`);
   if (seen.ecurie.size !== 1 || !seen.ecurie.has('cavalier')) errors.push(`écurie contre tirailleurs : ${[...seen.ecurie]}`); }
+{ const R = rng(11), seen = new Set(); for (let i = 0; i < 2000; i++) seen.add(pickCounter({ tirailleur: 20 }, ['epeiste', 'lancier', 'tirailleur'], R, COUNTER_P, true, OPTS));
+  console.log(`contre tirailleurs, caserne quand l'écurie existe : [${[...seen].join(', ')}]`);
+  if (!seen.has(HOLD) || seen.has('lancier') || seen.has('tirailleur') || seen.has(null)) errors.push(`caserne contre tirailleurs avec écurie : ${[...seen]}`); }
 if (errors.length) { console.error('ÉCHEC :\n  ' + errors.join('\n  ')); process.exit(1); }
 console.log('OK : IA dans les cibles');

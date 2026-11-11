@@ -17,16 +17,22 @@ export const HOLD = 'hold'; // ce bâtiment ne forme rien d'utile contre ce type
 //   qu'il ne bat pas, sinon HOLD — par bâtiment : une caserne ne forme plus au hasard faute de cavalerie
 // - 15 % : plus de hasard pur — une unité que le type adverse tiré ne bat pas (ex. ni lancier ni archer contre des
 //   tirailleurs), sinon HOLD
-export function pickCounter(enemy, opts, rnd = Math.random) {
+// p : part des formations qui contrent (difficulté : Facile 0,5) ; safeRest : le reste évite les unités battues (Normal/Difficile)
+// ou est laissé au hasard (null, Facile)
+// avail (optionnel) : unités formables dans TOUS les bâtiments de l'IA ; si le contre voulu se forme ailleurs, ce bâtiment attend
+// (HOLD) au lieu de diluer l'armée (passe 1.0 : une caserne qui formait des épéistes de repli faisait tomber le contre des
+// tirailleurs de 86 % à 74 %, mesuré par bâtiment dans test/ai.test.mjs)
+export function pickCounter(enemy, opts, rnd = Math.random, p = COUNTER_P, safeRest = true, avail = null) {
   const pc = Object.keys(COUNTER).map(k => [k, enemy[k] || 0]), tot = pc.reduce((s, x) => s + x[1], 0);
   if (tot < 3) return null;
-  const counter = rnd() < COUNTER_P; let r = rnd() * tot;
+  const counter = rnd() < p; let r = rnd() * tot;
   for (const [k, n] of pc) {
     if ((r -= n) >= 0) continue;
     const own = l => l.filter(c => opts.includes(c)), any = l => l.length ? l[Math.floor(rnd() * l.length)] : null;
-    const safe = own(opts.filter(c => !(BEATS[k] || []).includes(c)));
+    const safe = own(opts.filter(c => c !== k && !(BEATS[k] || []).includes(c))); // ni le miroir (un mélange cavaliers + 15 % de tirailleurs perd contre des tirailleurs : 18 % à 600, 3 % à 1200)
+    if (counter && avail && !own(COUNTER[k]).length && COUNTER[k].some(c => avail.includes(c))) return HOLD;
     if (counter) return any(own(COUNTER[k])) || any(own(FALLBACK[k] || [])) || any(own(Object.keys(BEATS).filter(x => BEATS[x].includes(k)))) || any(safe) || HOLD;
-    return any(safe) || HOLD;
+    return safeRest ? any(safe) || HOLD : null;
   }
   return null;
 }
