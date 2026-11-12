@@ -1,0 +1,1107 @@
+{
+ "meta": {
+  "date": "2026-11-12T01:45:37.879Z",
+  "commit": "6159729",
+  "seeds": 10,
+  "until": 600,
+  "diff": "normal",
+  "errors": []
+ },
+ "summary": {
+  "tirailleur": {
+   "n": 10,
+   "rows": [
+    {
+     "seed": 1,
+     "ecurie": 318,
+     "forge": 350,
+     "caserne": 256,
+     "archerie": 536,
+     "age1": 285,
+     "army600": {
+      "cavalier": 9,
+      "epeiste": 1
+     },
+     "armyN": 10,
+     "cav600": 9,
+     "counterShare": 0.9,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 12,
+      "epeiste": 1
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 0,
+     "res600": {
+      "nourriture": 539,
+      "bois": 323,
+      "or": 184,
+      "pierre": 304
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 2,
+     "ecurie": 325,
+     "forge": 371,
+     "caserne": 262,
+     "archerie": 467,
+     "age1": 285,
+     "army600": {
+      "cavalier": 12,
+      "epeiste": 2
+     },
+     "armyN": 14,
+     "cav600": 12,
+     "counterShare": 0.86,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 15,
+      "epeiste": 2
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 10,
+     "res600": {
+      "nourriture": 124,
+      "bois": 399,
+      "or": 315,
+      "pierre": 307
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 3,
+     "ecurie": 308,
+     "forge": 298,
+     "caserne": 217,
+     "archerie": 342,
+     "age1": 285,
+     "army600": {
+      "epeiste": 2,
+      "cavalier": 11
+     },
+     "armyN": 13,
+     "cav600": 11,
+     "counterShare": 0.85,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 5,
+      "cavalier": 11
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 22,
+     "res600": {
+      "nourriture": 104,
+      "bois": 607,
+      "or": 258,
+      "pierre": 301
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 4,
+     "ecurie": 308,
+     "forge": 311,
+     "caserne": 248,
+     "archerie": 502,
+     "age1": 285,
+     "army600": {
+      "cavalier": 15,
+      "epeiste": 2
+     },
+     "armyN": 17,
+     "cav600": 15,
+     "counterShare": 0.88,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 4,
+      "cavalier": 16
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 6,
+     "vills600": 14,
+     "foodLowMax": 10,
+     "res600": {
+      "nourriture": 202,
+      "bois": 400,
+      "or": 126,
+      "pierre": 325
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 5,
+     "ecurie": 298,
+     "forge": 327,
+     "caserne": 236,
+     "archerie": 452,
+     "age1": 285,
+     "army600": {
+      "cavalier": 16,
+      "epeiste": 2
+     },
+     "armyN": 18,
+     "cav600": 16,
+     "counterShare": 0.89,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 5,
+      "cavalier": 16
+     },
+     "farms480": 6,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 19,
+     "res600": {
+      "nourriture": 429,
+      "bois": 184,
+      "or": 363,
+      "pierre": 302
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 6,
+     "ecurie": 296,
+     "forge": 306,
+     "caserne": 243,
+     "archerie": 370,
+     "age1": 285,
+     "army600": {
+      "cavalier": 12,
+      "epeiste": 1
+     },
+     "armyN": 13,
+     "cav600": 12,
+     "counterShare": 0.92,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 3,
+      "cavalier": 13
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 18,
+     "res600": {
+      "nourriture": 217,
+      "bois": 613,
+      "or": 504,
+      "pierre": 524
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 7,
+     "ecurie": 296,
+     "forge": 298,
+     "caserne": 237,
+     "archerie": 375,
+     "age1": 285,
+     "army600": {
+      "cavalier": 11,
+      "epeiste": 1
+     },
+     "armyN": 12,
+     "cav600": 11,
+     "counterShare": 0.92,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 4,
+      "cavalier": 11
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 20,
+     "res600": {
+      "nourriture": 170,
+      "bois": 739,
+      "or": 428,
+      "pierre": 320
+     },
+     "farmFail": 1,
+     "over": false
+    },
+    {
+     "seed": 8,
+     "ecurie": 298,
+     "forge": 335,
+     "caserne": 412,
+     "archerie": 448,
+     "age1": 285,
+     "army600": {
+      "cavalier": 9,
+      "epeiste": 1
+     },
+     "armyN": 10,
+     "cav600": 9,
+     "counterShare": 0.9,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 12,
+      "epeiste": 1
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 27,
+     "res600": {
+      "nourriture": 97,
+      "bois": 280,
+      "or": 510,
+      "pierre": 329
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 9,
+     "ecurie": 297,
+     "forge": 299,
+     "caserne": 217,
+     "archerie": 367,
+     "age1": 285,
+     "army600": {
+      "epeiste": 2,
+      "cavalier": 14
+     },
+     "armyN": 16,
+     "cav600": 14,
+     "counterShare": 0.88,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 5,
+      "cavalier": 14
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 13,
+     "res600": {
+      "nourriture": 123,
+      "bois": 665,
+      "or": 442,
+      "pierre": 301
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 10,
+     "ecurie": 297,
+     "forge": 328,
+     "caserne": 251,
+     "archerie": 413,
+     "age1": 285,
+     "army600": {
+      "cavalier": 12,
+      "epeiste": 2
+     },
+     "armyN": 14,
+     "cav600": 12,
+     "counterShare": 0.86,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 15,
+      "epeiste": 2
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 18,
+     "res600": {
+      "nourriture": 231,
+      "bois": 393,
+      "or": 506,
+      "pierre": 379
+     },
+     "farmFail": 1,
+     "over": false
+    }
+   ],
+   "ecurieBy360": 10,
+   "ecurieForgeBy600": 10,
+   "cav6and30": 10,
+   "farmsOk": 10,
+   "foodOk": 10,
+   "med": {
+    "ecurie": 298,
+    "forge": 311,
+    "cav600": 12,
+    "counterShare": 0.88,
+    "armyN": 13,
+    "foodLowMax": 18,
+    "nourriture": 170,
+    "bois": 399,
+    "or": 363
+   }
+  },
+  "archer": {
+   "n": 10,
+   "rows": [
+    {
+     "seed": 1,
+     "ecurie": 297,
+     "forge": 364,
+     "caserne": 172,
+     "archerie": null,
+     "age1": 285,
+     "army600": {
+      "cavalier": 9,
+      "tirailleur": 10
+     },
+     "armyN": 19,
+     "cav600": 9,
+     "counterShare": 1,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 12,
+      "tirailleur": 10
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 23,
+     "res600": {
+      "nourriture": 449,
+      "bois": 146,
+      "or": 509,
+      "pierre": 444
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 2,
+     "ecurie": 297,
+     "forge": 372,
+     "caserne": 175,
+     "archerie": 552,
+     "age1": 285,
+     "army600": {
+      "cavalier": 9,
+      "tirailleur": 9
+     },
+     "armyN": 18,
+     "cav600": 9,
+     "counterShare": 1,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 12,
+      "tirailleur": 9
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 22,
+     "res600": {
+      "nourriture": 97,
+      "bois": 127,
+      "or": 520,
+      "pierre": 400
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 3,
+     "ecurie": 299,
+     "forge": 328,
+     "caserne": 191,
+     "archerie": 575,
+     "age1": 285,
+     "army600": {
+      "tirailleur": 17,
+      "cavalier": 2
+     },
+     "armyN": 19,
+     "cav600": 2,
+     "counterShare": 1,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 5,
+      "tirailleur": 17
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 68,
+     "res600": {
+      "nourriture": 68,
+      "bois": 82,
+      "or": 605,
+      "pierre": 450
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 4,
+     "ecurie": 309,
+     "forge": 312,
+     "caserne": 177,
+     "archerie": 593,
+     "age1": 285,
+     "army600": {
+      "tirailleur": 11,
+      "cavalier": 8
+     },
+     "armyN": 19,
+     "cav600": 8,
+     "counterShare": 1,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 11,
+      "tirailleur": 11
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 22,
+     "res600": {
+      "nourriture": 329,
+      "bois": 83,
+      "or": 381,
+      "pierre": 310
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 5,
+     "ecurie": 309,
+     "forge": 340,
+     "caserne": 186,
+     "archerie": null,
+     "age1": 285,
+     "army600": {
+      "cavalier": 9,
+      "tirailleur": 9
+     },
+     "armyN": 18,
+     "cav600": 9,
+     "counterShare": 1,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 12,
+      "tirailleur": 9
+     },
+     "farms480": 6,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 0,
+     "res600": {
+      "nourriture": 497,
+      "bois": 145,
+      "or": 408,
+      "pierre": 310
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 6,
+     "ecurie": 308,
+     "forge": 318,
+     "caserne": 178,
+     "archerie": null,
+     "age1": 285,
+     "army600": {
+      "cavalier": 8,
+      "tirailleur": 11
+     },
+     "armyN": 19,
+     "cav600": 8,
+     "counterShare": 1,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 10,
+      "tirailleur": 12
+     },
+     "farms480": 6,
+     "vills480": 14,
+     "farms600": 6,
+     "vills600": 14,
+     "foodLowMax": 40,
+     "res600": {
+      "nourriture": 198,
+      "bois": 142,
+      "or": 509,
+      "pierre": 456
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 7,
+     "ecurie": 320,
+     "forge": 385,
+     "caserne": 195,
+     "archerie": null,
+     "age1": 285,
+     "army600": {
+      "cavalier": 8,
+      "tirailleur": 11
+     },
+     "armyN": 19,
+     "cav600": 8,
+     "counterShare": 1,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 11,
+      "tirailleur": 11
+     },
+     "farms480": 5,
+     "vills480": 14,
+     "farms600": 6,
+     "vills600": 14,
+     "foodLowMax": 38,
+     "res600": {
+      "nourriture": 377,
+      "bois": 39,
+      "or": 164,
+      "pierre": 328
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 8,
+     "ecurie": 297,
+     "forge": 349,
+     "caserne": 181,
+     "archerie": null,
+     "age1": 285,
+     "army600": {
+      "cavalier": 9,
+      "tirailleur": 9
+     },
+     "armyN": 18,
+     "cav600": 9,
+     "counterShare": 1,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 12,
+      "tirailleur": 9
+     },
+     "farms480": 6,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 20,
+     "res600": {
+      "nourriture": 398,
+      "bois": 32,
+      "or": 511,
+      "pierre": 431
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 9,
+     "ecurie": 305,
+     "forge": 311,
+     "caserne": 161,
+     "archerie": 598,
+     "age1": 285,
+     "army600": {
+      "cavalier": 8,
+      "tirailleur": 11
+     },
+     "armyN": 19,
+     "cav600": 8,
+     "counterShare": 1,
+     "trained": {
+      "villageois": 11,
+      "cavalier": 10,
+      "tirailleur": 12
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 32,
+     "res600": {
+      "nourriture": 315,
+      "bois": 92,
+      "or": 566,
+      "pierre": 498
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 10,
+     "ecurie": 296,
+     "forge": 297,
+     "caserne": 165,
+     "archerie": 553,
+     "age1": 285,
+     "army600": {
+      "tirailleur": 15,
+      "cavalier": 5
+     },
+     "armyN": 20,
+     "cav600": 5,
+     "counterShare": 1,
+     "trained": {
+      "villageois": 11,
+      "tirailleur": 17,
+      "cavalier": 6
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 6,
+     "vills600": 14,
+     "foodLowMax": 47,
+     "res600": {
+      "nourriture": 6,
+      "bois": 240,
+      "or": 409,
+      "pierre": 542
+     },
+     "farmFail": 0,
+     "over": false
+    }
+   ],
+   "ecurieBy360": 10,
+   "ecurieForgeBy600": 10,
+   "cav6and30": 8,
+   "farmsOk": 9,
+   "foodOk": 10,
+   "med": {
+    "ecurie": 299,
+    "forge": 328,
+    "cav600": 8,
+    "counterShare": 1,
+    "armyN": 19,
+    "foodLowMax": 23,
+    "nourriture": 315,
+    "bois": 92,
+    "or": 509
+   }
+  },
+  "controle": {
+   "n": 10,
+   "rows": [
+    {
+     "seed": 1,
+     "ecurie": null,
+     "forge": 535,
+     "caserne": 239,
+     "archerie": 298,
+     "age1": 285,
+     "army600": {
+      "epeiste": 10,
+      "tirailleur": 4,
+      "archer": 4,
+      "lancier": 1
+     },
+     "armyN": 19,
+     "cav600": 0,
+     "counterShare": 0,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 13,
+      "tirailleur": 4,
+      "archer": 4,
+      "lancier": 1
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 0,
+     "res600": {
+      "nourriture": 1125,
+      "bois": 34,
+      "or": 178,
+      "pierre": 301
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 2,
+     "ecurie": 517,
+     "forge": 449,
+     "caserne": 261,
+     "archerie": 485,
+     "age1": 285,
+     "army600": {
+      "epeiste": 11,
+      "lancier": 3,
+      "tirailleur": 4,
+      "archer": 1,
+      "cavalier": 2
+     },
+     "armyN": 21,
+     "cav600": 2,
+     "counterShare": 0,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 14,
+      "lancier": 3,
+      "tirailleur": 4,
+      "archer": 1,
+      "cavalier": 2
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 0,
+     "res600": {
+      "nourriture": 752,
+      "bois": 193,
+      "or": 285,
+      "pierre": 383
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 3,
+     "ecurie": 568,
+     "forge": 506,
+     "caserne": 228,
+     "archerie": 298,
+     "age1": 285,
+     "army600": {
+      "tirailleur": 4,
+      "epeiste": 2,
+      "archer": 6,
+      "lancier": 4
+     },
+     "armyN": 16,
+     "cav600": 0,
+     "counterShare": 0,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 5,
+      "tirailleur": 4,
+      "archer": 6,
+      "lancier": 4
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 58,
+     "res600": {
+      "nourriture": 26,
+      "bois": 126,
+      "or": 430,
+      "pierre": 513
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 4,
+     "ecurie": 541,
+     "forge": 462,
+     "caserne": 267,
+     "archerie": 509,
+     "age1": 285,
+     "army600": {
+      "lancier": 5,
+      "epeiste": 9,
+      "tirailleur": 3,
+      "archer": 3
+     },
+     "armyN": 20,
+     "cav600": 0,
+     "counterShare": 0,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 12,
+      "lancier": 5,
+      "tirailleur": 3,
+      "archer": 3
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 6,
+     "vills600": 14,
+     "foodLowMax": 0,
+     "res600": {
+      "nourriture": 346,
+      "bois": 177,
+      "or": 323,
+      "pierre": 408
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 5,
+     "ecurie": 595,
+     "forge": 307,
+     "caserne": 261,
+     "archerie": 535,
+     "age1": 285,
+     "army600": {
+      "epeiste": 11,
+      "lancier": 3,
+      "tirailleur": 4,
+      "archer": 2
+     },
+     "armyN": 20,
+     "cav600": 0,
+     "counterShare": 0,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 14,
+      "lancier": 3,
+      "tirailleur": 4,
+      "archer": 2
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 6,
+     "res600": {
+      "nourriture": 476,
+      "bois": 30,
+      "or": 485,
+      "pierre": 501
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 6,
+     "ecurie": 540,
+     "forge": 465,
+     "caserne": 250,
+     "archerie": 527,
+     "age1": 285,
+     "army600": {
+      "tirailleur": 6,
+      "lancier": 6,
+      "epeiste": 5,
+      "archer": 2
+     },
+     "armyN": 19,
+     "cav600": 0,
+     "counterShare": 0,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 7,
+      "tirailleur": 6,
+      "lancier": 6,
+      "archer": 2
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 0,
+     "res600": {
+      "nourriture": 493,
+      "bois": 288,
+      "or": 419,
+      "pierre": 441
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 7,
+     "ecurie": null,
+     "forge": 462,
+     "caserne": 263,
+     "archerie": 486,
+     "age1": 285,
+     "army600": {
+      "epeiste": 5,
+      "lancier": 5,
+      "tirailleur": 8,
+      "archer": 2
+     },
+     "armyN": 20,
+     "cav600": 0,
+     "counterShare": 0,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 8,
+      "lancier": 5,
+      "tirailleur": 8,
+      "archer": 2
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 24,
+     "res600": {
+      "nourriture": 637,
+      "bois": 154,
+      "or": 504,
+      "pierre": 621
+     },
+     "farmFail": 1,
+     "over": false
+    },
+    {
+     "seed": 8,
+     "ecurie": null,
+     "forge": 547,
+     "caserne": 251,
+     "archerie": 297,
+     "age1": 285,
+     "army600": {
+      "lancier": 1,
+      "archer": 6,
+      "epeiste": 11,
+      "tirailleur": 1
+     },
+     "armyN": 19,
+     "cav600": 0,
+     "counterShare": 0,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 14,
+      "lancier": 1,
+      "archer": 6,
+      "tirailleur": 1
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 3,
+     "res600": {
+      "nourriture": 651,
+      "bois": 2,
+      "or": 308,
+      "pierre": 374
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 9,
+     "ecurie": 550,
+     "forge": 472,
+     "caserne": 232,
+     "archerie": 298,
+     "age1": 285,
+     "army600": {
+      "tirailleur": 3,
+      "epeiste": 8,
+      "archer": 7,
+      "lancier": 2
+     },
+     "armyN": 20,
+     "cav600": 0,
+     "counterShare": 0,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 11,
+      "tirailleur": 3,
+      "archer": 7,
+      "lancier": 2
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 15,
+     "res600": {
+      "nourriture": 706,
+      "bois": 251,
+      "or": 384,
+      "pierre": 446
+     },
+     "farmFail": 0,
+     "over": false
+    },
+    {
+     "seed": 10,
+     "ecurie": 459,
+     "forge": 427,
+     "caserne": 247,
+     "archerie": 486,
+     "age1": 285,
+     "army600": {
+      "epeiste": 12,
+      "tirailleur": 3,
+      "lancier": 2,
+      "archer": 2
+     },
+     "armyN": 19,
+     "cav600": 0,
+     "counterShare": 0,
+     "trained": {
+      "villageois": 11,
+      "epeiste": 15,
+      "tirailleur": 3,
+      "lancier": 2,
+      "archer": 2
+     },
+     "farms480": 7,
+     "vills480": 14,
+     "farms600": 7,
+     "vills600": 14,
+     "foodLowMax": 0,
+     "res600": {
+      "nourriture": 569,
+      "bois": 427,
+      "or": 387,
+      "pierre": 500
+     },
+     "farmFail": 0,
+     "over": false
+    }
+   ],
+   "ecurieBy360": 0,
+   "ecurieForgeBy600": 7,
+   "cav6and30": 0,
+   "farmsOk": 10,
+   "foodOk": 10,
+   "med": {
+    "ecurie": 541,
+    "forge": 462,
+    "cav600": 0,
+    "counterShare": 0,
+    "armyN": 19,
+    "foodLowMax": 0,
+    "nourriture": 569,
+    "bois": 154,
+    "or": 384
+   }
+  }
+ }
+}

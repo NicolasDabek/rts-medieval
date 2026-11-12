@@ -13,6 +13,8 @@
 //   chacun choisit à tour de rôle avec ses seules options, HOLD = attend, null = au hasard parmi ses options, comme ai.js) :
 //   Normal mêmes cibles (global ≥ 90 %, chaque adversaire ≥ 50 %, tirailleurs ≥ 75 %) ; Facile (contre 50 %, reste au hasard,
 //   vagues non groupées) nettement plus faible : global ≤ 70 % et au moins 25 points sous Normal
+import { readFileSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import { UNIT, DIFFS } from '../data.js';
 import { costOf } from '../rules.js';
 import { fight } from '../tools/duel.mjs';
@@ -89,5 +91,13 @@ for (const BUDGET of [600, 1200]) { const tot = {};
 { const R = rng(11), seen = new Set(); for (let i = 0; i < 2000; i++) seen.add(pickCounter({ tirailleur: 20 }, ['epeiste', 'lancier', 'tirailleur'], R, COUNTER_P, true, OPTS));
   console.log(`contre tirailleurs, caserne quand l'écurie existe : [${[...seen].join(', ')}]`);
   if (!seen.has(HOLD) || seen.has('lancier') || seen.has('tirailleur') || seen.has(null)) errors.push(`caserne contre tirailleurs avec écurie : ${[...seen]}`); }
+// passe GD 14 (affichage seulement, jamais d'échec) : part des unités de contre dans l'armée de l'IA en partie réelle.
+// Le banc (tools/ai-partie.mjs, Chromium) est trop lent pour npm test : on affiche le résumé en cache tools/ai-partie.json.
+{ let B = null; try { B = JSON.parse(readFileSync(new URL('../tools/ai-partie.json', import.meta.url), 'utf8')); } catch { }
+  if (!B) console.log('banc partie réelle : pas de résumé en cache (node tools/ai-partie.mjs 10 600 normal --save)');
+  else { const m = B.meta; let stale = '';
+    try { if (m.commit) execSync(`git diff --quiet ${m.commit} -- ai.js aipick.js wave.js units.js data.js`, { cwd: new URL('..', import.meta.url), stdio: 'ignore' }); } catch { stale = ' — ATTENTION : IA modifiée depuis, résumé à régénérer'; }
+    console.log(`banc partie réelle (résumé en cache tools/ai-partie.json : ${m.seeds} graines, ${m.diff}, ${m.until} s, commit ${m.commit}, ${m.date.slice(0, 10)}${stale})`);
+    for (const [scn, x] of Object.entries(B.summary)) console.log(`  ${scn} : part des unités de contre à ${m.until} s médiane ${Math.round(x.med.counterShare * 100)} % (cavaliers ${x.med.cav600}, armée ${x.med.armyN}) · écurie ≤ 360 s ${x.ecurieBy360}/${x.n} · écurie et forge ≤ 600 s ${x.ecurieForgeBy600}/${x.n} · cavaliers ≥ 6 et ≥ 30 % ${x.cav6and30}/${x.n} · fermes ≥ 40 % des villageois ${x.farmsOk}/${x.n} · nourriture < 50 au plus 90 s ${x.foodOk}/${x.n}`); } }
 if (errors.length) { console.error('ÉCHEC :\n  ' + errors.join('\n  ')); process.exit(1); }
 console.log('OK : IA dans les cibles');
