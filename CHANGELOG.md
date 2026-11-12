@@ -2,6 +2,19 @@
 
 Toutes les versions de RTS Médiéval. Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [1.0.1] — 2026-11-12
+
+Passe GD 14 : l'IA construit ce qu'il faut pour contrer votre armée, à temps, et nourrit mieux son économie. Mesuré en parties réelles (Normal, 10 graines, joueur immobile et immortel).
+
+### Ajouté
+- Banc d'essai IA en partie réelle : `tools/ai-partie.html` (dans un navigateur) et `tools/ai-partie.mjs` (en lot, Chromium), scénarios 15 tirailleurs / 15 archers / témoin, JSON toutes les 60 s ; résumé affiché par `npm test`.
+- Paramètre `?seed=N` (hasard déterministe) et `?bench` (pas de rendu continu) pour rejouer une partie à l'identique.
+
+### Modifié (IA, toutes difficultés ; réglages des difficultés inchangés)
+- **Ordre de construction réactif** : le bâtiment du contre à l'unité dominante du joueur, puis la forge, passent devant, avec une réserve de ressources (dès la recherche de l'âge qui les débloque) ; un bâtiment non prioritaire trop cher ne bloque plus la suite. Écurie finie avant 360 s contre des tirailleurs : 0/10 → 10/10 ; écurie et forge avant 600 s contre des archers : 1/10 → 10/10.
+- **Composition** : une caserne attend aussi quand le bâtiment du contre est prévu ou en chantier ; les unités hors contre ne dépassent plus 15 % de l'armée en Normal (50 % en Facile) quand le contre se forme ailleurs ; armée pleine avec moins de 30 % de contre → seules les unités de contre dépassent le plafond (+4). Contre des tirailleurs à 600 s : 0–2 cavaliers → 9–16 (85–92 % de l’armée, armée de 10 à 18 unités contre 15 à 19 avant).
+- **Économie** : fermes = 40 % des villageois + 1 d'avance, placement de repli (plus loin du moulin, puis autour de l'hôtel de ville) et échecs comptés ; bois d'une ferme réservé tant qu'il en manque ; l'or, la pierre et la nourriture en excès renvoient des récolteurs vers le bois.
+
 ## [1.0.0] — 2026-11-11
 
 Première version stable, jouable sur PC et mobile : https://nicolasdabek.github.io/rts-medieval/

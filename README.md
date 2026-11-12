@@ -1,4 +1,4 @@
-# RTS Médiéval — v1.0.0
+# RTS Médiéval — v1.0.1
 RTS 3D dans le navigateur (PC et mobile), inspiré d'Age of Empires / Empire Earth. Three.js r169 est inclus dans `vendor/` (aucun CDN, aucune requête externe), sons générés en WebAudio.
 
 ## Jouer
@@ -24,7 +24,7 @@ RTS 3D dans le navigateur (PC et mobile), inspiré d'Age of Empires / Empire Ear
 **Mobile** : toucher = sélection / ordre · appui long = sélectionner sans ordre · 1 doigt = caméra · pincer = zoom · minicarte = déplacer la vue · murs : toucher départ puis arrivée · boutons à gauche : cadre, attaque, armée, base, villageois inactif, désélection.
 
 HUD : ? aide, 🔊 son, 💾 sauvegarder, 📂 charger (localStorage ; sauvegarde automatique toutes les 60 s).
-Débogage : `?diff=normal`, `?speed=10`, `?nofog`.
+Débogage : `?diff=normal`, `?speed=10`, `?nofog`, `?seed=42` (hasard déterministe : même carte, mêmes décisions de l'IA), `?bench` (la boucle d'affichage s'arrête après la première image ; réservé au banc d'essai).
 
 ## Structure du code (modules ES)
 - `app.js` entrée · `main.js` boucle + API `window.__game` · `state.js` état mutable partagé
@@ -40,6 +40,10 @@ Prérequis : Node.js 18 ou plus récent (aucune dépendance à installer).
   - `test/ai.test.mjs` (80 graines à 600 et 1200) : miroir Normal 40–60 %, IA qui contre ≥ 90 % (chaque adversaire ≥ 50 %, tirailleurs ≥ 75 %), aussi avec un modèle honnête par bâtiment ; Facile ≤ 70 % et ≥ 25 points sous Normal ; doubles contres ≥ 65 % ; épéistes + cavaliers en vague groupée contre tirailleurs ≥ 50 %.
   - `test/version.test.mjs` : même version dans `package.json`, le menu et `CHANGELOG.md` ; aucune ressource externe dans la page.
 - `node tools/duel.mjs [budget] [essais]` : matrice des duels à coût égal.
+- **Banc d'essai IA en partie réelle** (`tools/ai-partie.html` + `tools/ai-partie.mjs`) : vraie partie (tous les modules du jeu, vraie boucle de l'IA, Three.js de `vendor/`), pas fixes de 0,05 s, `?seed` pour rejouer à l'identique. Le joueur ne fait rien : son armée de départ reste immobile et, comme ses bâtiments, ne meurt pas. Trois scénarios : 15 tirailleurs, 15 archers, témoin (aucune armée). JSON toutes les 60 s : armée de l'IA par type, unités formées, ressources, bâtiments finis / en chantier, âge, villageois, fermes, échecs de placement de ferme.
+  - Dans un navigateur : servez le dossier (`python3 -m http.server`) puis ouvrez http://localhost:8000/tools/ai-partie.html?scn=tirailleur&seed=1&until=600&diff=normal.
+  - En lot (Chromium via Playwright, **non installé par le projet** : utilisez celui de la machine) : `PLAYWRIGHT=/chemin/node_modules/playwright node tools/ai-partie.mjs [graines=10] [durée=600] [difficulté=normal] [première graine=1] [--save]` (≈ 30 s pour 3 × 10 parties). Affiche par graine : écurie et forge finies (s), cavaliers et part des unités de contre à 600 s, fermes / villageois à 480 et 600 s, plus longue période avec moins de 50 de nourriture après 300 s, ressources.
+  - `--save` écrit le résumé dans `tools/ai-partie.json` ; `npm test` l'affiche (sans jamais échouer dessus) et signale s'il est périmé (IA modifiée depuis le commit mesuré).
 - `npm run ic95 -- [a] [b] [graines] [budgets] [décalages] [preset]` (`tools/ic95.mjs`) : mesure appariée (graines jouées des deux côtés) avec IC95, ex. `npm run ic95 -- epeiste tirailleur 400 600,1200 0`.
 - `rules.js` : formule de dégâts, portée et recul (kiting) partagés par le jeu et l'outil de duel. `aipick.js` et `wave.js` : choix d'unités et vagues groupées de l'IA, partagés par le jeu et les tests.
 - Contres voulus : lancier > cavalier, héros · cavalier > archer, tirailleur · archer > épéiste, lancier · tirailleur > archer, lancier · épéiste > lancier, cavalier · héros > épéiste, cavalier.
