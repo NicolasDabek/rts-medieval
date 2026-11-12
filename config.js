@@ -7,6 +7,8 @@ export const params = new URLSearchParams(location.search);
 export const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 export const SPEED = +params.get('speed') || 1;
 export const NOFOG = params.has('nofog');
+// ?bench : la boucle d'affichage ne tourne plus après la première image (le banc tools/ai-partie.html appelle game.step lui-même, pas fixe)
+export const BENCH = params.has('bench');
 export const SIZE = 160, HALF = SIZE / 2;
 st.D = DIFFS[params.get('diff')] || null; st.started = !!st.D;
 export const TEAM_COLOR = [0x3060c0, 0xc03030];

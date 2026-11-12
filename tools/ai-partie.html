@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><title>Banc d'essai IA — partie réelle</title>
+<style>body{font-family:system-ui,sans-serif;background:#1e1206;color:#f3e2b3;margin:12px}iframe{width:480px;height:270px;border:1px solid #c9a35a}pre{white-space:pre-wrap;font-size:12px;background:#000;padding:8px;max-height:60vh;overflow:auto}a{color:#ffd890}</style></head>
+<body>
+<h1>Banc d'essai IA — partie réelle</h1>
+<p>Joue une vraie partie (modules du jeu, boucle de l'IA, Three.js du dossier <code>vendor/</code>) en pas fixes de 0,05 s, sans affichage
+de la simulation par la boucle de rendu (<code>?bench</code>) et avec un hasard déterministe (<code>?seed</code>).
+Le joueur ne fait rien : son armée de départ (scénario) reste immobile et elle est, comme ses bâtiments, immortelle.
+Paramètres : <code>?scn=tirailleur|archer|controle&amp;seed=1&amp;until=600&amp;diff=normal&amp;n=15</code>.
+Exemples : <a href="?scn=tirailleur&amp;seed=1">15 tirailleurs</a> · <a href="?scn=archer&amp;seed=1">15 archers</a> · <a href="?scn=controle&amp;seed=1">témoin</a>.</p>
+<iframe id="g"></iframe>
+<pre id="out">En cours…</pre>
+<script type="module">
+const q = new URLSearchParams(location.search), scn = q.get('scn') || 'tirailleur', seed = +(q.get('seed') || 1), until = +(q.get('until') || 600), diff = q.get('diff') || 'normal', N = +(q.get('n') || 15);
+const out = document.getElementById('out'), frame = document.getElementById('g');
+frame.src = `../index.html?diff=${diff}&seed=${seed}&bench`;
+await new Promise(r => frame.addEventListener('load', r, { once: true }));
+let g; for (let i = 0; i < 200 && !(g = frame.contentWindow.__game); i++) await new Promise(r => setTimeout(r, 50));
+const hdv0 = g.buildings.find(b => b.team === 0 && b.type === 'hdv');
+// armée du joueur : N unités du scénario devant l'hôtel de ville (vers le centre), sans ordre
+if (scn !== 'controle') for (let i = 0; i < N; i++) g.addUnit(scn, 0, hdv0.pos.x + 8 + (i % 5) * 1.4, hdv0.pos.z - 8 - Math.floor(i / 5) * 1.4);
+const DT = 0.05, ARMY = u => u.team === 1 && u.def.cls !== 'villager';
+const res = {
+  scn, seed, diff, until, snaps: [], firstDone: {}, trained: {}, foodLowMax: 0, ageT: {}, farmFail: 0, version: frame.contentWindow.document.getElementById('ver')?.textContent || null,
+};
+const seen = new Set(g.units.filter(u => u.team === 1)); let lowStart = null;
+const immortal = () => { for (const e of g.units) if (e.team === 0) e.hp = e.maxHp; for (const b of g.buildings) if (b.team === 0) b.hp = b.maxHp; };
+const snap = t => {
+  const T = g.teams[1], mine = g.buildings.filter(b => b.team === 1), army = {}, bld = {}, wip = {};
+  for (const u of g.units) if (ARMY(u)) army[u.type] = (army[u.type] || 0) + 1;
+  for (const b of mine) (b.done ? bld : wip)[b.type] = ((b.done ? bld : wip)[b.type] || 0) + 1;
+  const vills = g.units.filter(u => u.team === 1 && u.def.cls === 'villager').length;
+  return { t, age: T.age, vills, army, res: Object.fromEntries(Object.entries(T.res).map(([k, v]) => [k, Math.round(v)])), bld, wip, farms: mine.filter(b => b.def.farm && b.done).length, farmsAll: mine.filter(b => b.def.farm).length, waves: g.ai.waveN, trained: { ...res.trained }, farmFail: g.ai.farmFail || 0 };
+};
+const t0 = performance.now();
+for (let s = 1; s <= until; s++) {
+  for (let k = 0; k < 1 / DT; k++) { g.step(DT); if (k % 4 === 0) immortal(); }
+  immortal();
+  for (const u of g.units) if (u.team === 1 && !seen.has(u)) { seen.add(u); res.trained[u.type] = (res.trained[u.type] || 0) + 1; }
+  for (const b of g.buildings) if (b.team === 1 && b.done && res.firstDone[b.type] === undefined) res.firstDone[b.type] = s;
+  const T = g.teams[1]; if (T.age && res.ageT[T.age] === undefined) res.ageT[T.age] = s;
+  if (s > 300) { if (T.res.nourriture < 50) { lowStart ??= s; res.foodLowMax = Math.max(res.foodLowMax, s - lowStart + 1); } else lowStart = null; }
+  if (s % 60 === 0) { res.snaps.push(snap(s)); out.textContent = `t = ${s} s…`; await new Promise(r => setTimeout(r, 0)); }
+}
+res.ms = Math.round(performance.now() - t0); res.over = g.over;
+out.textContent = JSON.stringify(res, null, 1); window.__result = res; window.__done = true;
+</script>
+</body></html>

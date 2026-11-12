@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { DIFFS } from './data.js';
 import { st } from './state.js';
 import { ai, aiUpdate } from './ai.js';
-import { $, HALF, SPEED, isTouch, teams } from './config.js';
+import { $, BENCH, HALF, SPEED, isTouch, teams } from './config.js';
 import { keys, mouse, pickEntity, rallyAt, screenOf, setRally, unlockAudio } from './input.js';
 import { P0, explored, generateMap, updateFog } from './map.js';
 import { N, gridT, rebuildGrid, toCell } from './path.js';
@@ -36,6 +36,9 @@ export function step(dt) {
   aiUpdate(dt);
 }
 export function loop() {
+  // ?bench : ni simulation ni rendu en continu (le brouillard et les murs instanciés créent des matériaux three.js, dont les
+  // identifiants consomment Math.random au rythme de l'affichage : la partie ne serait plus reproductible avec ?seed)
+  if (BENCH && clock.running) return;
   const rdt = Math.min(clock.getDelta(), 0.05);
   const sp = st.camDist * 0.9 * rdt, e = 12; let mv = false;
   const k = keys, m = mouse.in && !isTouch;

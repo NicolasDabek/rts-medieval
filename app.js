@@ -1,3 +1,4 @@
+import './seed.js'; // ?seed=N : hasard déterministe (avant tout le reste)
 import { boot, game, setSfx, setUnlock, extraActs } from './main.js';
 import * as audio from './audio.js';
 import { serialize, loadInto, KEY } from './save.js';
